@@ -19,7 +19,7 @@ def main(model_choice='default', balance_method=None):
         balance_method (str): Method for balancing the data, options: "smote" or "undersample".
     """
     # Step 1: Load the data
-    data_path = '/Users/odedatias/Documents/הנדסת מערכות תוכנה ומידע/שנה ג/סמסטר ה/מבוא לבינה מלאכותית/עבודות/מטלה 1/explainability/data/training_v2.csv'  # Update the correct path to your dataset
+    data_path = '/Users/odedatias/Documents/GitHub/main/explainability/data/training_v2.csv'  # Update the correct path to your dataset
     data = load_data(data_path)
 
     # Check if data was loaded correctly
