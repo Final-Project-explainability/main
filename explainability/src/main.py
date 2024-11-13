@@ -27,19 +27,6 @@ MODEL_PATHS = {
 }
 
 
-# Function to train or load LightGBM model
-def train_lightgbm(X_train, y_train, model_path="lightgbm_model.joblib"):
-    if os.path.exists(model_path):
-        model = joblib.load(model_path)
-        print("LightGBM model loaded from file.")
-    else:
-        model = lgb.LGBMClassifier(objective='binary', metric='binary_logloss')
-        model.fit(X_train, y_train)
-        joblib.dump(model, model_path)
-        print("LightGBM model trained and saved to file!")
-    return model
-
-
 # General function to train or load a model
 def train_or_load_model(model_name, train_func, X_train, y_train):
     model_path = MODEL_PATHS[model_name]
@@ -121,7 +108,7 @@ def main(model_choice='default', balance_method=None):
     data = preprocess_data(data)
 
     if 'hospital_death' in data.columns:
-        X = data.drop(columns=['hospital_death'])
+        X = data.drop(columns=['hospital_death', 'patient_id'])
         y = data['hospital_death']
     else:
         print("Target column 'hospital_death' not found.")
@@ -129,13 +116,20 @@ def main(model_choice='default', balance_method=None):
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    X_train_balanced, y_train_balanced = balance_data(X_train, y_train, method=balance_method)
+    # Perform data balancing if balance_method is specified
+    if balance_method:
+        X_train_balanced, y_train_balanced = balance_data(X_train, y_train, method=balance_method)
+        print(f"Data balanced using method: {balance_method}")
+    else:
+        X_train_balanced, y_train_balanced = X_train, y_train  # No balancing
+        print("Data not balanced.")
 
     # Choose model for training or loading
     if model_choice == 'tuned':
         model = train_or_load_model('tuned', tune_model, X_train_balanced, y_train_balanced)
     elif model_choice == 'xgboost':
         model = train_or_load_model('xgboost', train_xgboost, X_train_balanced, y_train_balanced)
+
     elif model_choice == 'logistic':
         model = train_or_load_model('logistic', train_logistic_regression, X_train_balanced, y_train_balanced)
     elif model_choice == 'lightgbm':
@@ -148,7 +142,7 @@ def main(model_choice='default', balance_method=None):
     explain_model_with_lime(model, X_train_balanced, X_test)
 
     # Call function to analyze mortality risk for a specific individual
-    analyze_individual_risk(model, X_test)
+    # analyze_individual_risk(model, X_test)
 
 
 # Functions for SHAP and LIME explanations remain the same
