@@ -64,10 +64,47 @@ def top_percent_recall(model, X_test, y_test, percentage):
 #     print(classification_report(y_test, y_pred))
 
 
-def evaluate_model(model, X_test, y_test):
-    # Model predictions
-    y_pred = model.predict(X_test)
+# def evaluate_model(model, X_test, y_test):
+#     # Model predictions
+#     y_pred = model.predict(X_test)
+#     y_proba = model.predict_proba(X_test)[:, 1]
+#
+#     # Calculate basic metrics
+#     accuracy = accuracy_score(y_test, y_pred)
+#     precision = precision_score(y_test, y_pred)
+#     recall = recall_score(y_test, y_pred)
+#     roc_auc = roc_auc_score(y_test, y_proba)
+#
+#     print(f"Accuracy: {accuracy:.4f}")
+#     print(f"Precision: {precision:.4f}")
+#     print(f"Recall: {recall:.4f}")
+#     print(f"ROC AUC: {roc_auc:.4f}")
+#
+#     # Classification report
+#     print("\nClassification Report:")
+#     print(classification_report(y_test, y_pred))
+#
+#     # Calculate metrics for Top 2% and 5% risk predictions
+#     top_2_percent_threshold = np.percentile(y_proba, 98)
+#     top_5_percent_threshold = np.percentile(y_proba, 95)
+#
+#     # Predictions for the highest risk categories
+#     top_2_preds = (y_proba >= top_2_percent_threshold).astype(int)
+#     top_5_preds = (y_proba >= top_5_percent_threshold).astype(int)
+#
+#     top_2_recall = recall_score(y_test, top_2_preds)
+#     top_5_recall = recall_score(y_test, top_5_preds)
+#
+#     print(f"Recall for Top 2%: {top_2_recall:.4f}")
+#     print(f"Recall for Top 5%: {top_5_recall:.4f}")
+
+
+def evaluate_model(model, X_test, y_test, optimal_threshold=0.5):
+    # Model predictions with probability
     y_proba = model.predict_proba(X_test)[:, 1]
+
+    # Apply custom threshold for classification
+    y_pred = (y_proba >= optimal_threshold).astype(int)
 
     # Calculate basic metrics
     accuracy = accuracy_score(y_test, y_pred)

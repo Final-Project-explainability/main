@@ -20,49 +20,103 @@ def train_model(X_train, y_train, model_path="gradient_boosting_model.joblib"):
     return model
 
 
+# def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", tune=True):
+#     if os.path.exists(model_path):
+#         model = joblib.load(model_path)
+#         print("XGBoost model loaded from file.")
+#     else:
+#         # Set scale_pos_weight based on class imbalance
+#         scale_pos_weight = (len(y_train) - sum(y_train)) / sum(y_train)
+#
+#         if tune:
+#             # Define parameter grid for hyperparameter tuning
+#             param_grid = {
+#                 'max_depth': [3, 5, 7],
+#                 'learning_rate': [0.01, 0.1, 0.2],
+#                 'n_estimators': [100, 200, 300],
+#                 'scale_pos_weight': [1, scale_pos_weight],
+#                 'min_child_weight': [1, 5, 10],
+#                 'subsample': [0.8, 1],
+#                 'colsample_bytree': [0.8, 1]
+#             }
+#
+#             xgb_model = xgb.XGBClassifier(objective='binary:logistic', eval_metric='logloss')
+#             grid_search = GridSearchCV(estimator=xgb_model, param_grid=param_grid, scoring='f1', cv=3, verbose=1, n_jobs=-1)
+#             grid_search.fit(X_train, y_train)
+#
+#             # Use the best model from grid search
+#             model = grid_search.best_estimator_
+#             print("Best parameters found: ", grid_search.best_params_)
+#         else:
+#             # Train with default or manually set parameters
+#             model = xgb.XGBClassifier(
+#                 objective='binary:logistic',
+#                 eval_metric='logloss',
+#                 max_depth=5,
+#                 learning_rate=0.1,
+#                 n_estimators=200,
+#                 scale_pos_weight=scale_pos_weight,
+#                 min_child_weight=5,
+#                 subsample=0.8,
+#                 colsample_bytree=0.8
+#             )
+#             model.fit(X_train, y_train)
+#
+#         # Save the trained model
+#         joblib.dump(model, model_path)
+#         print("XGBoost model trained and saved to file!")
+#
+#     return model
+
 def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", tune=True):
     if os.path.exists(model_path):
         model = joblib.load(model_path)
         print("XGBoost model loaded from file.")
     else:
-        # Set scale_pos_weight based on class imbalance
         scale_pos_weight = (len(y_train) - sum(y_train)) / sum(y_train)
 
         if tune:
-            # Define parameter grid for hyperparameter tuning
+            # Expanded parameter grid for improving ROC AUC
             param_grid = {
-                'max_depth': [3, 5, 7],
-                'learning_rate': [0.01, 0.1, 0.2],
-                'n_estimators': [100, 200, 300],
+                'max_depth': [3, 4, 5],
+                'learning_rate': [0.01, 0.05, 0.1],
+                'n_estimators': [200, 300],
                 'scale_pos_weight': [1, scale_pos_weight],
                 'min_child_weight': [1, 5, 10],
-                'subsample': [0.8, 1],
-                'colsample_bytree': [0.8, 1]
+                'gamma': [0, 0.1, 0.2],
+                'subsample': [0.7, 0.8, 0.9],
+                'colsample_bytree': [0.7, 0.8, 0.9]
             }
 
             xgb_model = xgb.XGBClassifier(objective='binary:logistic', eval_metric='logloss')
-            grid_search = GridSearchCV(estimator=xgb_model, param_grid=param_grid, scoring='f1', cv=3, verbose=1, n_jobs=-1)
-            grid_search.fit(X_train, y_train)
+            random_search = RandomizedSearchCV(
+                estimator=xgb_model,
+                param_distributions=param_grid,
+                scoring='roc_auc',  # Focus on maximizing ROC AUC
+                cv=3,
+                n_iter=10,
+                verbose=1,
+                n_jobs=-1
+            )
+            random_search.fit(X_train, y_train)
 
-            # Use the best model from grid search
-            model = grid_search.best_estimator_
-            print("Best parameters found: ", grid_search.best_params_)
+            model = random_search.best_estimator_
+            print("Best parameters found: ", random_search.best_params_)
         else:
-            # Train with default or manually set parameters
             model = xgb.XGBClassifier(
                 objective='binary:logistic',
                 eval_metric='logloss',
-                max_depth=5,
-                learning_rate=0.1,
-                n_estimators=200,
+                max_depth=4,
+                learning_rate=0.05,
+                n_estimators=300,
                 scale_pos_weight=scale_pos_weight,
                 min_child_weight=5,
+                gamma=0.1,
                 subsample=0.8,
                 colsample_bytree=0.8
             )
             model.fit(X_train, y_train)
 
-        # Save the trained model
         joblib.dump(model, model_path)
         print("XGBoost model trained and saved to file!")
 
