@@ -9,6 +9,9 @@ import lightgbm as lgb
 import optuna
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import cross_val_score
+import random
+random.seed(42)
+np.random.seed(42)
 
 
 def train_model(X_train, y_train, model_path="gradient_boosting_model.joblib"):
@@ -126,6 +129,71 @@ def train_model(X_train, y_train, model_path="gradient_boosting_model.joblib"):
 #
 #     return model
 
+# def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", tune=True): # changed in 10:41 14.11.24
+#     if os.path.exists(model_path):
+#         model = joblib.load(model_path)
+#         print("XGBoost model loaded from file.")
+#     else:
+#         scale_pos_weight = (len(y_train) - sum(y_train)) / sum(y_train)
+#
+#         if tune:
+#             def objective(trial):
+#                 # Define the parameter space for Bayesian Optimization
+#                 param = {
+#                     'objective': 'binary:logistic',
+#                     'eval_metric': 'logloss',
+#                     'max_depth': trial.suggest_int('max_depth', 3, 10),
+#                     'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.1, log=True),
+#                     'n_estimators': trial.suggest_int('n_estimators', 100, 500),
+#                     'scale_pos_weight': scale_pos_weight,
+#                     'min_child_weight': trial.suggest_int('min_child_weight', 1, 10),
+#                     'gamma': trial.suggest_float('gamma', 0.0001, 1.0, log=True),  # Fixed range for gamma
+#                     'subsample': trial.suggest_float('subsample', 0.6, 1.0),
+#                     'colsample_bytree': trial.suggest_float('colsample_bytree', 0.6, 1.0),
+#                 }
+#
+#                 # Use cross-validation to evaluate the model on training data only
+#                 model = xgb.XGBClassifier(**param)
+#                 cv_scores = cross_val_score(model, X_train, y_train, scoring='roc_auc', cv=3)
+#                 return cv_scores.mean()
+#
+#             # Optimize the objective function using Optuna
+#             study = optuna.create_study(direction="maximize")
+#             study.optimize(objective, n_trials=500)
+#
+#             # Get the best parameters found by Optuna
+#             best_params = study.best_params
+#             best_params['objective'] = 'binary:logistic'
+#             best_params['eval_metric'] = 'logloss'
+#             best_params['scale_pos_weight'] = scale_pos_weight
+#
+#             print("Best parameters found by Bayesian Optimization: ", best_params)
+#
+#             # Train the model with the best parameters on the entire training set
+#             model = xgb.XGBClassifier(**best_params)
+#             model.fit(X_train, y_train)
+#         else:
+#             # Train with default parameters if tuning is disabled
+#             model = xgb.XGBClassifier(
+#                 objective='binary:logistic',
+#                 eval_metric='logloss',
+#                 max_depth=4,
+#                 learning_rate=0.05,
+#                 n_estimators=300,
+#                 scale_pos_weight=scale_pos_weight,
+#                 min_child_weight=5,
+#                 gamma=0.1,
+#                 subsample=0.8,
+#                 colsample_bytree=0.8
+#             )
+#             model.fit(X_train, y_train)
+#
+#         # Save the trained model
+#         joblib.dump(model, model_path)
+#         print("XGBoost model trained and saved to file!")
+#
+#     return model
+
 def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", tune=True):
     if os.path.exists(model_path):
         model = joblib.load(model_path)
@@ -134,43 +202,55 @@ def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", tune=True
         scale_pos_weight = (len(y_train) - sum(y_train)) / sum(y_train)
 
         if tune:
+            # Re-run with previous best parameters
+            best_params = {
+                'max_depth': 4,
+                'learning_rate': 0.048382856372731146,
+                'n_estimators': 477,
+                'min_child_weight': 6,
+                'gamma': 0.0001605071172415074,
+                'subsample': 0.7501140945156216,
+                'colsample_bytree': 0.7481462648709857,
+                'objective': 'binary:logistic',
+                'eval_metric': 'logloss',
+                'scale_pos_weight': scale_pos_weight
+            }
+
+            print("Using previous best parameters: ", best_params)
+            model = xgb.XGBClassifier(**best_params)
+            model.fit(X_train, y_train)
+
+            # Narrow down search space based on previous best parameters
             def objective(trial):
-                # Define the parameter space for Bayesian Optimization
                 param = {
                     'objective': 'binary:logistic',
                     'eval_metric': 'logloss',
-                    'max_depth': trial.suggest_int('max_depth', 3, 10),
-                    'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.1, log=True),
-                    'n_estimators': trial.suggest_int('n_estimators', 100, 500),
+                    'max_depth': trial.suggest_int('max_depth', 3, 5),
+                    'learning_rate': trial.suggest_float('learning_rate', 0.04, 0.06),
+                    'n_estimators': trial.suggest_int('n_estimators', 450, 500),
                     'scale_pos_weight': scale_pos_weight,
-                    'min_child_weight': trial.suggest_int('min_child_weight', 1, 10),
-                    'gamma': trial.suggest_float('gamma', 0.0001, 1.0, log=True),  # Fixed range for gamma
-                    'subsample': trial.suggest_float('subsample', 0.6, 1.0),
-                    'colsample_bytree': trial.suggest_float('colsample_bytree', 0.6, 1.0),
+                    'min_child_weight': trial.suggest_int('min_child_weight', 5, 7),
+                    'gamma': trial.suggest_float('gamma', 0.0001, 0.0005, log=True),
+                    'subsample': trial.suggest_float('subsample', 0.7, 0.8),
+                    'colsample_bytree': trial.suggest_float('colsample_bytree', 0.7, 0.8),
                 }
 
-                # Use cross-validation to evaluate the model on training data only
                 model = xgb.XGBClassifier(**param)
                 cv_scores = cross_val_score(model, X_train, y_train, scoring='roc_auc', cv=3)
                 return cv_scores.mean()
 
-            # Optimize the objective function using Optuna
             study = optuna.create_study(direction="maximize")
-            study.optimize(objective, n_trials=500)
+            study.optimize(objective, n_trials=100)  # Reduced trials for refined search
 
-            # Get the best parameters found by Optuna
             best_params = study.best_params
             best_params['objective'] = 'binary:logistic'
             best_params['eval_metric'] = 'logloss'
             best_params['scale_pos_weight'] = scale_pos_weight
 
-            print("Best parameters found by Bayesian Optimization: ", best_params)
-
-            # Train the model with the best parameters on the entire training set
+            print("Best parameters after refined search: ", best_params)
             model = xgb.XGBClassifier(**best_params)
             model.fit(X_train, y_train)
         else:
-            # Train with default parameters if tuning is disabled
             model = xgb.XGBClassifier(
                 objective='binary:logistic',
                 eval_metric='logloss',
@@ -185,12 +265,10 @@ def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", tune=True
             )
             model.fit(X_train, y_train)
 
-        # Save the trained model
         joblib.dump(model, model_path)
         print("XGBoost model trained and saved to file!")
 
     return model
-
 
 def train_lightgbm(X_train, y_train, model_path="lightgbm_model.joblib"):
     if os.path.exists(model_path):

@@ -144,7 +144,7 @@ def main(model_choice='default', balance_method=None):
     explain_model_with_lime(model, X_train_balanced, X_test)
 
     # Call function to analyze mortality risk for a specific individual
-    # analyze_individual_risk(model, X_test)
+    analyze_individual_risk(model, X_test)
 
 
 # Functions for SHAP and LIME explanations remain the same
