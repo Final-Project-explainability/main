@@ -156,7 +156,7 @@ def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", tune=True
 
             # Optimize the objective function using Optuna
             study = optuna.create_study(direction="maximize")
-            study.optimize(objective, n_trials=50)
+            study.optimize(objective, n_trials=500)
 
             # Get the best parameters found by Optuna
             best_params = study.best_params
