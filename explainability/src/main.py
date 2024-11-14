@@ -5,7 +5,7 @@ import lightgbm as lgb  # Import LightGBM
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from data_loader import load_data
-from preprocessing import preprocess_data, balance_data
+from preprocessing import preprocess_data, balance_data, feature_engineering
 from model import *
 from evaluate import evaluate_model
 from sklearn.model_selection import train_test_split
@@ -14,6 +14,7 @@ import lime
 from lime import lime_tabular
 from xgboost import XGBClassifier
 import matplotlib.pyplot as plt
+
 
 
 
@@ -96,7 +97,7 @@ def analyze_individual_risk(model, X_test):
 
 # Main function
 def main(model_choice='default', balance_method=None):
-    data_path = '/Users/odedatias/Documents/GitHub/main/explainability/data/training_v2.csv'
+    data_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'training_v2.csv')
     data = load_data(data_path)
 
     if data is None:
@@ -105,10 +106,11 @@ def main(model_choice='default', balance_method=None):
 
     print("Column names in the dataset:", data.columns)
 
+    data = feature_engineering(data)
     data = preprocess_data(data)
 
     if 'hospital_death' in data.columns:
-        X = data.drop(columns=['hospital_death', 'patient_id'])
+        X = data.drop(columns=['hospital_death'])
         y = data['hospital_death']
     else:
         print("Target column 'hospital_death' not found.")
