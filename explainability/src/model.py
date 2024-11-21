@@ -10,6 +10,7 @@ import optuna
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import cross_val_score
 import random
+
 random.seed(42)
 np.random.seed(42)
 
@@ -193,16 +194,22 @@ def train_model(X_train, y_train, model_path="gradient_boosting_model.joblib"):
 #         print("XGBoost model trained and saved to file!")
 #
 #     return model
+import json
 
-def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", tune=True):
+
+def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", params_path="best_params.json", tune=True):
     if os.path.exists(model_path):
         model = joblib.load(model_path)
         print("XGBoost model loaded from file.")
     else:
         scale_pos_weight = (len(y_train) - sum(y_train)) / sum(y_train)
 
-        if tune:
-            # Re-run with previous best parameters
+        # Load previous best parameters if available
+        if os.path.exists(params_path):
+            with open(params_path, 'r') as file:
+                best_params = json.load(file)
+            print("Loaded previous best parameters: ", best_params)
+        else:
             best_params = {
                 'max_depth': 4,
                 'learning_rate': 0.048382856372731146,
@@ -215,12 +222,11 @@ def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", tune=True
                 'eval_metric': 'logloss',
                 'scale_pos_weight': scale_pos_weight
             }
+            print("Using default parameters: ", best_params)
 
-            print("Using previous best parameters: ", best_params)
-            model = xgb.XGBClassifier(**best_params)
-            model.fit(X_train, y_train)
+        if tune:
+            print("Starting hyperparameter tuning...")
 
-            # Narrow down search space based on previous best parameters
             def objective(trial):
                 param = {
                     'objective': 'binary:logistic',
@@ -240,45 +246,28 @@ def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", tune=True
                 return cv_scores.mean()
 
             study = optuna.create_study(direction="maximize")
-            study.optimize(objective, n_trials=100)  # Reduced trials for refined search
+            study.optimize(objective, n_trials=250)
 
             best_params = study.best_params
             best_params['objective'] = 'binary:logistic'
             best_params['eval_metric'] = 'logloss'
             best_params['scale_pos_weight'] = scale_pos_weight
 
-            print("Best parameters after refined search: ", best_params)
-            model = xgb.XGBClassifier(**best_params)
-            model.fit(X_train, y_train)
-        else:
-            model = xgb.XGBClassifier(
-                objective='binary:logistic',
-                eval_metric='logloss',
-                max_depth=4,
-                learning_rate=0.05,
-                n_estimators=300,
-                scale_pos_weight=scale_pos_weight,
-                min_child_weight=5,
-                gamma=0.1,
-                subsample=0.8,
-                colsample_bytree=0.8
-            )
-            model.fit(X_train, y_train)
+            print("Best parameters found: ", best_params)
 
+            # Save the best parameters to a JSON file
+            with open(params_path, 'w') as file:
+                json.dump(best_params, file)
+            print(f"Best parameters saved to {params_path}")
+
+        # Train the model with the best parameters
+        model = xgb.XGBClassifier(**best_params)
+        model.fit(X_train, y_train)
+
+        # Save the trained model
         joblib.dump(model, model_path)
         print("XGBoost model trained and saved to file!")
 
-    return model
-
-def train_lightgbm(X_train, y_train, model_path="lightgbm_model.joblib"):
-    if os.path.exists(model_path):
-        model = joblib.load(model_path)
-        print("LightGBM model loaded from file.")
-    else:
-        model = lgb.LGBMClassifier(objective='binary', metric='binary_logloss')
-        model.fit(X_train, y_train)
-        joblib.dump(model, model_path)
-        print("LightGBM model trained and saved to file!")
     return model
 
 

@@ -24,6 +24,8 @@ def preprocess_data(data):
     # Handle missing values by filling them with the median
     data = data.fillna(data.median())
 
+    data = handle_missing_values(data)
+
     return data
 
 
@@ -53,7 +55,7 @@ def balance_data(X_train, y_train, method="smote"):
 
 def feature_engineering(data):
     # Drop redundant columns
-    data = data.drop(columns=['patient_id', 'encounter_id', 'hospital_id'], errors='ignore')
+    data = data.drop(columns=['patient_id', 'encounter_id'], errors='ignore')
 
     # 1. Aggregated Features (Range of Vital Signs)
     data['d1_diasbp_range'] = data['d1_diasbp_max'] - data['d1_diasbp_min']
@@ -64,31 +66,87 @@ def feature_engineering(data):
     data['d1_sysbp_range'] = data['d1_sysbp_max'] - data['d1_sysbp_min']
     data['d1_temp_range'] = data['d1_temp_max'] - data['d1_temp_min']
 
-    # 2. Relative Ratios
-    data['bilirubin_to_creatinine'] = data['d1_bilirubin_max'] / (data['d1_creatinine_max'] + 0.1)
-    data['bun_to_creatinine'] = data['d1_bun_max'] / (data['d1_creatinine_max'] + 0.1)
-    data['pao2_fio2_ratio'] = data['pao2_apache'] / (data['fio2_apache'] + 0.1)
+    # # 2. Relative Ratios
+    # data['bilirubin_to_creatinine'] = data['d1_bilirubin_max'] / (data['d1_creatinine_max'] + 0.1)
+    # data['bun_to_creatinine'] = data['d1_bun_max'] / (data['d1_creatinine_max'] + 0.1)
+    # data['pao2_fio2_ratio'] = data['pao2_apache'] / (data['fio2_apache'] + 0.1)
 
     # 3. Binary Flags for Critical Ranges
     data['high_bun_flag'] = np.where(data['d1_bun_max'] > 30, 1, 0)
     data['high_creatinine_flag'] = np.where(data['d1_creatinine_max'] > 1.5, 1, 0)
     data['low_albumin_flag'] = np.where(data['d1_albumin_min'] < 3.5, 1, 0)
 
-    # 4. Temporal Features (Binning pre-ICU length of stay)
-    data['pre_icu_los_days_bin'] = pd.cut(data['pre_icu_los_days'], bins=[-1, 1, 3, 7, 30],
-                                          labels=['<1 day', '1-3 days', '3-7 days', '>7 days'])
+    # # 4. Temporal Features (Binning pre-ICU length of stay)
+    # data['pre_icu_los_days_bin'] = pd.cut(data['pre_icu_los_days'], bins=[-1, 1, 3, 7, 30],
+    #                                       labels=['<1 day', '1-3 days', '3-7 days', '>7 days'])
 
-    # 5. Interaction and Polynomial Features
-    data['age_squared'] = data['age'] ** 2
-    data['heart_rate_map_interaction'] = data['heart_rate_apache'] * data['map_apache']
+    # # 5. Interaction and Polynomial Features
+    # data['age_squared'] = data['age'] ** 2
+    # data['heart_rate_map_interaction'] = data['heart_rate_apache'] * data['map_apache']
 
-    # 6. Medical Condition Flags - Severity Score
-    data['severity_score'] = data[
-        ['aids', 'cirrhosis', 'diabetes_mellitus', 'hepatic_failure', 'immunosuppression', 'leukemia', 'lymphoma',
-         'solid_tumor_with_metastasis']].sum(axis=1)
+    # # 6. Medical Condition Flags - Severity Score
+    # data['severity_score'] = data[
+    #     ['aids', 'cirrhosis', 'diabetes_mellitus', 'hepatic_failure', 'immunosuppression', 'leukemia', 'lymphoma',
+    #      'solid_tumor_with_metastasis']].sum(axis=1)
 
-    # 7. Encoding Categorical Variables
-    data = pd.get_dummies(data, columns=['ethnicity', 'icu_type', 'apache_3j_bodysystem', 'apache_2_bodysystem',
-                                         'pre_icu_los_days_bin'], drop_first=True)
+    # # 7. Encoding Categorical Variables
+    # data = pd.get_dummies(data, columns=['ethnicity', 'icu_type', 'apache_3j_bodysystem', 'apache_2_bodysystem',
+    #                                      'pre_icu_los_days_bin'], drop_first=True)
 
+    # 3. Sepsis Triad
+    data['sepsis_triad_flag'] = (
+            (data['d1_heartrate_max'] > 100) &  # Tachycardia
+            (data['d1_temp_max'] > 38) &  # Fever
+            (data['d1_resprate_max'] > 20)  # Increased respiratory rate
+    ).astype(int)
+
+    # 4. Renal Function Triad
+    data['renal_function_triad_flag'] = (
+            (data['d1_creatinine_max'] > 1.5) &  # Elevated creatinine
+            (data['urineoutput_apache'] < 500) &  # Low urine output
+            (data['d1_bun_max'] > 30)  # Elevated BUN
+    ).astype(int)
+
+    # 5. Multi-Organ Dysfunction Syndrome (MODS) Pentad
+    data['mods_pentad_flag'] = (
+            (data['d1_creatinine_max'] > 1.5) &  # Renal dysfunction
+            (data['d1_bilirubin_max'] > 2) &  # Hepatic dysfunction
+            (data['d1_sysbp_min'] < 90) &  # Cardiovascular dysfunction
+            (data['d1_spo2_min'] < 90) &  # Respiratory dysfunction
+            (data['d1_platelets_min'] < 150)  # Hematological dysfunction
+    ).astype(int)
+
+    return data
+
+
+import pandas as pd
+import numpy as np
+
+
+def handle_missing_values(data):
+    """
+    Handle missing values in the dataset by identifying and imputing them.
+    Args:
+        data (DataFrame): The input dataset.
+    Returns:
+        DataFrame: Dataset with missing values handled.
+    """
+    # Define additional missing value representations
+    missing_values = ['NA', 'N/A', '', 'None', '?', 'nan', 'NaN']
+
+    # Replace these representations with np.nan
+    data.replace(missing_values, np.nan, inplace=True)
+
+    # Check and display missing values
+    missing_columns = data.columns[data.isnull().any()]
+    print(f"Columns with missing values: {list(missing_columns)}")
+
+    # Handle missing values: Example strategies
+    for column in missing_columns:
+        if data[column].dtype in ['float64', 'int64']:  # Numeric columns
+            data[column].fillna(data[column].median(), inplace=True)  # Fill with median
+        else:  # Non-numeric columns
+            data[column].fillna(data[column].mode()[0], inplace=True)  # Fill with mode
+
+    print("All missing values have been handled.")
     return data
