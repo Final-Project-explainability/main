@@ -34,6 +34,7 @@ def train_or_load_model(model_name, train_func, X_train, y_train):
     if os.path.exists(model_path):
         model = joblib.load(model_path)
         print(f"{model_name.capitalize()} model loaded from file.")
+        print(model.get_params())
     else:
         model = train_func(X_train, y_train)
         joblib.dump(model, model_path)
