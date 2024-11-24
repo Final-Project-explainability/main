@@ -249,7 +249,7 @@ def feature_elimination_by_importance(X_train, y_train, X_val, y_val):
 
 
 def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", params_path="best_params.json",
-                  features_path="selected_features.json", tune=False, with_feature_filtered=False):
+                  features_path="selected_features.json", tune=False, with_feature_filtered=False, fine_tune=False):
     """
     Train an XGBoost model with optional hyperparameter tuning and feature selection.
     Args:
@@ -312,7 +312,7 @@ def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", params_pa
             return cv_scores.mean()
 
         study = optuna.create_study(direction="maximize")
-        study.optimize(objective, n_trials=50)
+        study.optimize(objective, n_trials=600)
 
         best_params = study.best_params
         best_params['objective'] = 'binary:logistic'
@@ -341,17 +341,43 @@ def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", params_pa
 
         # Train the model with the best parameters and selected features
         model = FeatureFilteredXGB(selected_features=selected_features, **best_params)
-        model.fit(X_train, y_train)
 
     else:
         model = xgb.XGBClassifier(**best_params)
-        model.fit(X_train_split, y_train_split)
+
+    # Fine-tune the model (if enabled)
+    if fine_tune:
+        print("Starting fine-tuning on the validation set...")
+        model = fine_tune_xgboost(model, X_val, y_val)
+
+    model.fit(X_train, y_train)
 
     # Save the trained model
     joblib.dump(model, model_path)
     print("XGBoost model trained and saved to file!")
 
     return model
+
+
+def fine_tune_xgboost(model, X_val, y_val):
+    """
+    Fine-tune an XGBoost model using early stopping on a validation set.
+    """
+    # Ensure the model is an XGBClassifier instance
+    if not isinstance(model, xgb.XGBClassifier):
+        raise ValueError("The model provided is not an instance of xgb.XGBClassifier.")
+
+    eval_set = [(X_val, y_val)]
+
+    try:
+        # Attempt to use early stopping
+        model.fit(X_val, y_val, eval_set=eval_set, early_stopping_rounds=10, verbose=True)
+    except TypeError:
+        print("Early stopping not supported in the current XGBoost version. Training without early stopping.")
+        model.fit(X_val, y_val, eval_set=eval_set, verbose=True)
+
+    return model
+
 
 
 def train_logistic_regression(X_train, y_train, model_path="logistic_regression_model.joblib"):

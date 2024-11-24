@@ -24,7 +24,7 @@ def preprocess_data(data):
     # Handle missing values by filling them with the median
     data = data.fillna(data.median())
 
-    data = handle_missing_values(data)
+    data = clean_data(data)
 
     return data
 
@@ -123,7 +123,7 @@ import pandas as pd
 import numpy as np
 
 
-def handle_missing_values(data):
+def clean_data(data):
     """
     Handle missing values in the dataset by identifying and imputing them.
     Args:
@@ -131,22 +131,99 @@ def handle_missing_values(data):
     Returns:
         DataFrame: Dataset with missing values handled.
     """
-    # Define additional missing value representations
-    missing_values = ['NA', 'N/A', '', 'None', '?', 'nan', 'NaN']
-
-    # Replace these representations with np.nan
-    data.replace(missing_values, np.nan, inplace=True)
-
-    # Check and display missing values
-    missing_columns = data.columns[data.isnull().any()]
-    print(f"Columns with missing values: {list(missing_columns)}")
-
-    # Handle missing values: Example strategies
-    for column in missing_columns:
-        if data[column].dtype in ['float64', 'int64']:  # Numeric columns
-            data[column].fillna(data[column].median(), inplace=True)  # Fill with median
-        else:  # Non-numeric columns
-            data[column].fillna(data[column].mode()[0], inplace=True)  # Fill with mode
-
-    print("All missing values have been handled.")
+    # # Define additional missing value representations
+    # missing_values = ['NA', 'N/A', '', 'None', '?', 'nan', 'NaN']
+    #
+    # # Replace these representations with np.nan
+    # data.replace(missing_values, np.nan, inplace=True)
+    #
+    # # Check and display missing values
+    # missing_columns = data.columns[data.isnull().any()]
+    # print(f"Columns with missing values: {list(missing_columns)}")
+    #
+    # # Handle missing values: Example strategies
+    # for column in missing_columns:
+    #     if data[column].dtype in ['float64', 'int64']:  # Numeric columns
+    #         data[column].fillna(data[column].median(), inplace=True)  # Fill with median
+    #     else:  # Non-numeric columns
+    #         data[column].fillna(data[column].mode()[0], inplace=True)  # Fill with mode
+    #
+    # print("All missing values have been handled.")
+    #
+    # # Logical Checks
+    # print("Checking and handling logically invalid values...")
+    #
+    # # גיל
+    # invalid_age_count = data[(data['age'] < 0) | (data['age'] > 120)].shape[0]
+    # if invalid_age_count > 0:
+    #     print(f"Found {invalid_age_count} invalid ages. Capping values to range [0, 120].")
+    #     data['age'] = data['age'].clip(lower=0, upper=120)
+    #
+    # # BMI
+    # invalid_bmi_count = data[(data['bmi'] < 10) | (data['bmi'] > 80)].shape[0]
+    # if invalid_bmi_count > 0:
+    #     print(f"Found {invalid_bmi_count} invalid BMI values. Capping values to range [10, 80].")
+    #     data['bmi'] = data['bmi'].clip(lower=10, upper=80)
+    #
+    # # גובה
+    # invalid_height_count = data[(data['height'] < 50) | (data['height'] > 250)].shape[0]
+    # if invalid_height_count > 0:
+    #     print(f"Found {invalid_height_count} invalid heights. Capping values to range [50, 250].")
+    #     data['height'] = data['height'].clip(lower=50, upper=250)
+    #
+    # # משקל
+    # invalid_weight_count = data[(data['weight'] < 3) | (data['weight'] > 300)].shape[0]
+    # if invalid_weight_count > 0:
+    #     print(f"Found {invalid_weight_count} invalid weights. Capping values to range [3, 300].")
+    #     data['weight'] = data['weight'].clip(lower=3, upper=300)
+    #
+    # # אלבומין
+    # invalid_albumin_count = data[(data['albumin_apache'] < 1.0) | (data['albumin_apache'] > 5.0)].shape[0]
+    # if invalid_albumin_count > 0:
+    #     print(f"Found {invalid_albumin_count} invalid albumin values. Capping values to range [1.0, 5.0].")
+    #     data['albumin_apache'] = data['albumin_apache'].clip(lower=1.0, upper=5.0)
+    #
+    # # המוגלובין
+    # invalid_hematocrit_count = data[(data['hematocrit_apache'] < 10) | (data['hematocrit_apache'] > 100)].shape[0]
+    # if invalid_hematocrit_count > 0:
+    #     print(f"Found {invalid_hematocrit_count} invalid hematocrit values. Capping values to range [20, 60].")
+    #     data['hematocrit_apache'] = data['hematocrit_apache'].clip(lower=20, upper=60)
+    #
+    # # רמת גלוקוז
+    # invalid_glucose_count = data[(data['glucose_apache'] < 20) | (data['glucose_apache'] > 900)].shape[0]
+    # if invalid_glucose_count > 0:
+    #     print(f"Found {invalid_glucose_count} invalid glucose values. Capping values to range [20, 900].")
+    #     data['glucose_apache'] = data['glucose_apache'].clip(lower=20, upper=900)
+    #
+    # # דופק
+    # invalid_hr_count = data[(data['heart_rate_apache'] < 30) | (data['heart_rate_apache'] > 300)].shape[0]
+    # if invalid_hr_count > 0:
+    #     print(f"Found {invalid_hr_count} invalid heart rate values. Capping values to range [30, 300].")
+    #     data['heart_rate_apache'] = data['heart_rate_apache'].clip(lower=30, upper=300)
+    #
+    # # לחץ דם ממוצע
+    # invalid_map_count = data[(data['map_apache'] < 20) | (data['map_apache'] > 200)].shape[0]
+    # if invalid_map_count > 0:
+    #     print(f"Found {invalid_map_count} invalid mean arterial pressure values. Capping values to range [20, 150].")
+    #     data['map_apache'] = data['map_apache'].clip(lower=20, upper=200)
+    #
+    # # טמפרטורה
+    # invalid_temp_count = data[(data['temp_apache'] < 30) | (data['temp_apache'] > 43)].shape[0]
+    # if invalid_temp_count > 0:
+    #     print(f"Found {invalid_temp_count} invalid temperature values. Capping values to range [30, 43].")
+    #     data['temp_apache'] = data['temp_apache'].clip(lower=30, upper=43)
+    #
+    # # ניקוי עמודת fio2_apache
+    # invalid_fio2_count = data[(data['fio2_apache'] < 0.21) | (data['fio2_apache'] > 1.0)].shape[0]
+    # if invalid_fio2_count > 0:
+    #     print(f"Found {invalid_fio2_count} invalid FiO2 values. Capping values to range [0.21, 1.0].")
+    #     data['fio2_apache'] = data['fio2_apache'].clip(lower=0.21, upper=1.0)
+    #
+    # # כמות שתן
+    # invalid_urine_count = data[(data['urineoutput_apache'] < 0) | (data['urineoutput_apache'] > 10000)].shape[0]
+    # if invalid_urine_count > 0:
+    #     print(f"Found {invalid_urine_count} invalid urine output values. Capping values to range [0, 10000].")
+    #     data['urineoutput_apache'] = data['urineoutput_apache'].clip(lower=0, upper=10000)
+    #
+    # print("Logical checks and corrections complete.")
     return data
