@@ -1,5 +1,13 @@
-from sklearn.metrics import precision_score, recall_score, accuracy_score, classification_report, roc_auc_score
+import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+    classification_report,
+    roc_curve,
+)
 
 
 def top_percent_recall(model, X_test, y_test, percentage):
@@ -121,16 +129,32 @@ def evaluate_model(model, X_test, y_test, optimal_threshold=0.5):
     print("\nClassification Report:")
     print(classification_report(y_test, y_pred))
 
-    # Calculate metrics for Top 2% and 5% risk predictions
+    # Calculate metrics for Top 2%, 5%, and 10% risk predictions
     top_2_percent_threshold = np.percentile(y_proba, 98)
     top_5_percent_threshold = np.percentile(y_proba, 95)
+    top_10_percent_threshold = np.percentile(y_proba, 90)
 
     # Predictions for the highest risk categories
     top_2_preds = (y_proba >= top_2_percent_threshold).astype(int)
     top_5_preds = (y_proba >= top_5_percent_threshold).astype(int)
+    top_10_preds = (y_proba >= top_10_percent_threshold).astype(int)
 
     top_2_recall = recall_score(y_test, top_2_preds)
     top_5_recall = recall_score(y_test, top_5_preds)
+    top_10_recall = recall_score(y_test, top_10_preds)
 
     print(f"Recall for Top 2%: {top_2_recall:.4f}")
     print(f"Recall for Top 5%: {top_5_recall:.4f}")
+    print(f"Recall for Top 10%: {top_10_recall:.4f}")
+
+    # Plot the ROC curve
+    fpr, tpr, thresholds = roc_curve(y_test, y_proba)
+    plt.figure(figsize=(8, 6))
+    plt.plot(fpr, tpr, label=f'ROC Curve (AUC = {roc_auc:.4f})')
+    plt.plot([0, 1], [0, 1], 'k--', label='Random Guessing')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic (ROC) Curve')
+    plt.legend(loc='lower right')
+    plt.grid(True)
+    plt.show()

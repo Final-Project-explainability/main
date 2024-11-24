@@ -54,27 +54,38 @@ def balance_data(X_train, y_train, method="smote"):
 
 
 def feature_engineering(data):
-    # Drop redundant columns
+    # Drop columns that are likely outputs of prediction models (e.g., probabilistic predictions)
+    data = data.drop(columns=['apache_4a_hospital_death_prob', 'apache_4a_icu_death_prob'], errors='ignore')
+
+    # # Drop columns that represent complex calculations or derived scores (e.g., APACHE diagnoses)
+    # data = data.drop(columns=['apache_2_diagnosis', 'apache_3j_diagnosis', 'apache_post_operative',
+    #                           'apache_3j_bodysystem', 'apache_2_bodysystem'], errors='ignore')
+    #
+    # # Drop columns containing derived clinical metrics related to "apache" (e.g., scores or physiological assessments)
+    # data = data.drop(columns=[col for col in data.columns if 'apache' in col], errors='ignore')
+
+    # Drop columns that are purely identifiers or irrelevant to modeling (e.g., patient or hospital IDs)
     data = data.drop(columns=['patient_id', 'encounter_id'], errors='ignore')
 
-    # 1. Aggregated Features (Range of Vital Signs)
-    data['d1_diasbp_range'] = data['d1_diasbp_max'] - data['d1_diasbp_min']
-    data['d1_heartrate_range'] = data['d1_heartrate_max'] - data['d1_heartrate_min']
-    data['d1_mbp_range'] = data['d1_mbp_max'] - data['d1_mbp_min']
-    data['d1_resprate_range'] = data['d1_resprate_max'] - data['d1_resprate_min']
-    data['d1_spo2_range'] = data['d1_spo2_max'] - data['d1_spo2_min']
-    data['d1_sysbp_range'] = data['d1_sysbp_max'] - data['d1_sysbp_min']
-    data['d1_temp_range'] = data['d1_temp_max'] - data['d1_temp_min']
+
+    # # 1. Aggregated Features (Range of Vital Signs)
+    # data['d1_diasbp_range'] = data['d1_diasbp_max'] - data['d1_diasbp_min']
+    # data['d1_heartrate_range'] = data['d1_heartrate_max'] - data['d1_heartrate_min']
+    # data['d1_mbp_range'] = data['d1_mbp_max'] - data['d1_mbp_min']
+    # data['d1_resprate_range'] = data['d1_resprate_max'] - data['d1_resprate_min']
+    # data['d1_spo2_range'] = data['d1_spo2_max'] - data['d1_spo2_min']
+    # data['d1_sysbp_range'] = data['d1_sysbp_max'] - data['d1_sysbp_min']
+    # data['d1_temp_range'] = data['d1_temp_max'] - data['d1_temp_min']
 
     # # 2. Relative Ratios
     # data['bilirubin_to_creatinine'] = data['d1_bilirubin_max'] / (data['d1_creatinine_max'] + 0.1)
     # data['bun_to_creatinine'] = data['d1_bun_max'] / (data['d1_creatinine_max'] + 0.1)
     # data['pao2_fio2_ratio'] = data['pao2_apache'] / (data['fio2_apache'] + 0.1)
 
-    # 3. Binary Flags for Critical Ranges
-    data['high_bun_flag'] = np.where(data['d1_bun_max'] > 30, 1, 0)
-    data['high_creatinine_flag'] = np.where(data['d1_creatinine_max'] > 1.5, 1, 0)
-    data['low_albumin_flag'] = np.where(data['d1_albumin_min'] < 3.5, 1, 0)
+    # # 3. Binary Flags for Critical Ranges
+    # data['high_bun_flag'] = np.where(data['d1_bun_max'] > 30, 1, 0)
+    # data['high_creatinine_flag'] = np.where(data['d1_creatinine_max'] > 1.5, 1, 0)
+    # data['low_albumin_flag'] = np.where(data['d1_albumin_min'] < 3.5, 1, 0)
 
     # # 4. Temporal Features (Binning pre-ICU length of stay)
     # data['pre_icu_los_days_bin'] = pd.cut(data['pre_icu_los_days'], bins=[-1, 1, 3, 7, 30],
@@ -93,12 +104,12 @@ def feature_engineering(data):
     # data = pd.get_dummies(data, columns=['ethnicity', 'icu_type', 'apache_3j_bodysystem', 'apache_2_bodysystem',
     #                                      'pre_icu_los_days_bin'], drop_first=True)
 
-    # 3. Sepsis Triad
-    data['sepsis_triad_flag'] = (
-            (data['d1_heartrate_max'] > 100) &  # Tachycardia
-            (data['d1_temp_max'] > 38) &  # Fever
-            (data['d1_resprate_max'] > 20)  # Increased respiratory rate
-    ).astype(int)
+    # # 3. Sepsis Triad
+    # data['sepsis_triad_flag'] = (
+    #         (data['d1_heartrate_max'] > 100) &  # Tachycardia
+    #         (data['d1_temp_max'] > 38) &  # Fever
+    #         (data['d1_resprate_max'] > 20)  # Increased respiratory rate
+    # ).astype(int)
 
     # 4. Renal Function Triad
     data['renal_function_triad_flag'] = (

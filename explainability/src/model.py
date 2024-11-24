@@ -249,9 +249,10 @@ def feature_elimination_by_importance(X_train, y_train, X_val, y_val):
 
 
 def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", params_path="best_params.json",
-                  features_path="selected_features.json", tune=False, with_feature_filtered=False, fine_tune=False):
+                  features_path="selected_features.json", tune=False, with_feature_filtered=False,
+                  fine_tune=False, long_run=True, trials=1000):
     """
-    Train an XGBoost model with optional hyperparameter tuning and feature selection.
+    Train an XGBoost model with optional hyperparameter tuning, feature selection, and long-run optimization.
     Args:
         X_train: Training feature set.
         y_train: Training labels.
@@ -259,10 +260,12 @@ def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", params_pa
         params_path: Path to save or load best parameters.
         features_path: Path to save or load selected features.
         tune: Whether to perform hyperparameter tuning.
-        with_feature_filtered: Whether to perform feature elimination by importance
+        with_feature_filtered: Whether to perform feature elimination by importance.
+        fine_tune: Whether to fine-tune the model on the validation set.
+        long_run: Whether to perform long-running optimization using Optuna.
+        trials: Number of trials for long-run optimization.
     Returns:
         Trained XGBoost model.
-        :param with_feature_filtered:
     """
 
     scale_pos_weight = (len(y_train) - sum(y_train)) / sum(y_train)
@@ -270,27 +273,66 @@ def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", params_pa
     # Split training data into training and validation sets
     X_train_split, X_val, y_train_split, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
 
-    # Load previous best parameters if available
-    if os.path.exists(params_path):
-        with open(params_path, 'r') as file:
-            best_params = json.load(file)
-        print("Loaded previous best parameters: ", best_params)
-    else:
-        best_params = {
-            'max_depth': 4,
-            'learning_rate': 0.048382856372731146,
-            'n_estimators': 477,
-            'min_child_weight': 6,
-            'gamma': 0.0001605071172415074,
-            'subsample': 0.7501140945156216,
-            'colsample_bytree': 0.7481462648709857,
-            'objective': 'binary:logistic',
-            'eval_metric': 'logloss',
-            'scale_pos_weight': scale_pos_weight
-        }
-        print("Using default parameters: ", best_params)
+    if long_run:
+        print("Starting long-run optimization with Optuna...")
 
-    if tune:
+        def long_run_objective(trial):
+            param = {
+                'objective': 'binary:logistic',
+                'eval_metric': 'logloss',
+                'max_depth': trial.suggest_int('max_depth', 3, 10),
+                'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.2, log=True),
+                'n_estimators': trial.suggest_int('n_estimators', 100, 1000),
+                'min_child_weight': trial.suggest_int('min_child_weight', 1, 10),
+                'gamma': trial.suggest_float('gamma', 1e-8, 1.0, log=True),
+                'subsample': trial.suggest_float('subsample', 0.5, 1.0),
+                'colsample_bytree': trial.suggest_float('colsample_bytree', 0.5, 1.0),
+                'scale_pos_weight': scale_pos_weight,
+                'lambda': trial.suggest_float('lambda', 1e-5, 10.0, log=True),  # L2 regularization
+                'alpha': trial.suggest_float('alpha', 1e-5, 10.0, log=True)    # L1 regularization
+            }
+
+            model = xgb.XGBClassifier(**param)
+            cv_scores = cross_val_score(model, X_train_split, y_train_split, scoring='roc_auc', cv=3)
+            return cv_scores.mean()
+
+        study = optuna.create_study(direction="maximize")
+        study.optimize(long_run_objective, n_trials=trials)
+
+        best_params = study.best_params
+        best_params['objective'] = 'binary:logistic'
+        best_params['eval_metric'] = 'logloss'
+        best_params['scale_pos_weight'] = scale_pos_weight
+
+        print("Best parameters found: ", best_params)
+
+        # Save the best parameters to a JSON file
+        with open(params_path, 'w') as f:
+            json.dump(best_params, f)
+        print(f"Optimized parameters saved to {params_path}")
+
+    else:
+        # Load previous best parameters if available
+        if os.path.exists(params_path):
+            with open(params_path, 'r') as file:
+                best_params = json.load(file)
+            print("Loaded previous best parameters: ", best_params)
+        else:
+            best_params = {
+                'max_depth': 4,
+                'learning_rate': 0.048382856372731146,
+                'n_estimators': 477,
+                'min_child_weight': 6,
+                'gamma': 0.0001605071172415074,
+                'subsample': 0.7501140945156216,
+                'colsample_bytree': 0.7481462648709857,
+                'objective': 'binary:logistic',
+                'eval_metric': 'logloss',
+                'scale_pos_weight': scale_pos_weight
+            }
+            print("Using default parameters: ", best_params)
+
+    if tune and not long_run:
         print("Starting hyperparameter tuning...")
 
         def objective(trial):
@@ -357,7 +399,6 @@ def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", params_pa
     print("XGBoost model trained and saved to file!")
 
     return model
-
 
 def fine_tune_xgboost(model, X_val, y_val):
     """
