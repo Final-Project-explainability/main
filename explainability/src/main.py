@@ -5,18 +5,16 @@ import lightgbm as lgb  # Import LightGBM
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from data_loader import load_data
+import Explainer
+from explainability.src.ModelManager import ModelManager
 from preprocessing import preprocess_data, balance_data, feature_engineering
-from model import *
+from Model import *
 from evaluate import evaluate_model
 from sklearn.model_selection import train_test_split
 import shap
 import lime
 from lime import lime_tabular
-from xgboost import XGBClassifier
 import matplotlib.pyplot as plt
-
-
-
 
 # Dictionary for model file paths
 MODEL_PATHS = {
@@ -30,15 +28,12 @@ MODEL_PATHS = {
 
 # General function to train or load a model
 def train_or_load_model(model_name, train_func, X_train, y_train):
-    model_path = MODEL_PATHS[model_name]
-    if os.path.exists(model_path):
-        model = joblib.load(model_path)
-        print(f"{model_name.capitalize()} model loaded from file.")
-        print(model.get_params())
-    else:
+    try:
+        model = ModelManager.load_model(model_name)
+        print("Model loaded")
+    except ValueError:
         model = train_func(X_train, y_train)
-        joblib.dump(model, model_path)
-        print(f"{model_name.capitalize()} model trained and saved to file.")
+        print(f"{model_name.capitalize()} model trained")
     return model
 
 
@@ -74,7 +69,8 @@ def analyze_individual_risk(model, X_test):
             else:
                 explainer = shap.KernelExplainer(model.predict_proba, X_test)
                 shap_values = explainer.shap_values(individual_data)
-                base_value = explainer.expected_value[1] if isinstance(explainer.expected_value, (list, np.ndarray)) else \
+                base_value = explainer.expected_value[1] if isinstance(explainer.expected_value,
+                                                                       (list, np.ndarray)) else \
                     explainer.expected_value
                 print("Using KernelExplainer for non-tree-based model.")
 
@@ -96,10 +92,23 @@ def analyze_individual_risk(model, X_test):
             print("Invalid input. Please enter a numeric row number.")
 
 
+def select_and_train_model(X_train, y_train, model_choice='default'):
+    """Select, train or load a model based on the given choice."""
+    model_mapping = {
+        'tuned': tune_model,
+        'XGBClassifier': train_xgboost,
+        'LogisticRegression': train_logistic_regression,
+        'lightgbm': train_lightgbm,
+        'default': train_model
+    }
+
+    train_func = model_mapping.get(model_choice)
+    return train_or_load_model(model_choice, train_func, X_train, y_train)
+
+
 # Main function
 def main(model_choice='default', balance_method=None):
-    data_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'training_v2.csv')
-    data = load_data(data_path)
+    data = load_data()
 
     if data is None:
         print("Error loading the dataset")
@@ -127,21 +136,10 @@ def main(model_choice='default', balance_method=None):
         X_train_balanced, y_train_balanced = X_train, y_train  # No balancing
         print("Data not balanced.")
 
-    # Choose model for training or loading
-    if model_choice == 'tuned':
-        model = train_or_load_model('tuned', tune_model, X_train_balanced, y_train_balanced)
-    elif model_choice == 'xgboost':
-        model = train_or_load_model('xgboost', train_xgboost, X_train_balanced, y_train_balanced)
-
-    elif model_choice == 'logistic':
-        model = train_or_load_model('logistic', train_logistic_regression, X_train_balanced, y_train_balanced)
-    elif model_choice == 'lightgbm':
-        model = train_or_load_model('lightgbm', train_lightgbm, X_train_balanced, y_train_balanced)
-    else:
-        model = train_or_load_model('default', train_model, X_train_balanced, y_train_balanced)
+    model = select_and_train_model(X_train, y_train, model_choice)
 
     evaluate_model(model, X_test, y_test)
-    explain_model_with_shap(model, X_train_balanced)
+    Explainer.explain_model_with_shap(model, X_train_balanced)
     explain_model_with_lime(model, X_train_balanced, X_test)
 
     # Call function to analyze mortality risk for a specific individual
@@ -149,20 +147,6 @@ def main(model_choice='default', balance_method=None):
 
 
 # Functions for SHAP and LIME explanations remain the same
-def explain_model_with_shap(model, X_train):
-    if isinstance(model, (GradientBoostingClassifier, xgb.XGBClassifier, lgb.LGBMClassifier)):
-        explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(X_train)
-        print("Using TreeExplainer for tree-based model.")
-    elif isinstance(model, LogisticRegression):
-        explainer = shap.KernelExplainer(model.predict, X_train)
-        shap_values = explainer.shap_values(X_train)
-        print("Using KernelExplainer for logistic regression model.")
-    else:
-        explainer = shap.KernelExplainer(model.predict, X_train)
-        shap_values = explainer.shap_values(X_train)
-        print("Using KernelExplainer for general model.")
-    shap.summary_plot(shap_values, X_train)
 
 
 def explain_model_with_lime(model, X_train, X_test):
@@ -174,7 +158,7 @@ def explain_model_with_lime(model, X_train, X_test):
 
 if __name__ == "__main__":
     # main(model_choice='lightgbm')  # You can choose the new LightGBM model here
-    main(model_choice='xgboost')
+    main(model_choice="LogisticRegression")
     # main(model_choice='logistic', balance_method='smote')
     # main(model_choice='logistic', balance_method='undersample')
     # main(model_choice='tuned random')

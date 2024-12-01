@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -8,7 +7,7 @@ from sklearn.metrics import (
     classification_report,
     roc_curve,
 )
-
+import numpy as np
 
 def top_percent_recall(model, X_test, y_test, percentage):
     """
@@ -40,71 +39,6 @@ def top_percent_recall(model, X_test, y_test, percentage):
     recall = recall_score(top_y_true, top_y_pred)
 
     return recall
-
-
-# def evaluate_model(model, X_test, y_test):
-#     """
-#     Evaluate the trained model on the test data.
-#     Args:
-#         model: The trained model.
-#         X_test (DataFrame): Features for testing.
-#         y_test (Series): True target values for testing.
-#     """
-#     # Make predictions
-#     y_pred = model.predict(X_test)
-#
-#     # Calculate accuracy, precision, recall
-#     accuracy = accuracy_score(y_test, y_pred)
-#     precision = precision_score(y_test, y_pred)
-#     recall = recall_score(y_test, y_pred)
-#
-#     # Calculate recall for top 2% and 5%
-#     recall_2_percent = top_percent_recall(model, X_test, y_test, 2)
-#     recall_5_percent = top_percent_recall(model, X_test, y_test, 5)
-#
-#     # Print classification report for more details
-#     print(f"Accuracy: {accuracy:.4f}")
-#     print(f"Precision: {precision:.4f}")
-#     print(f"Recall: {recall:.4f}")
-#     print(f"Recall for top 2%: {recall_2_percent:.4f}")
-#     print(f"Recall for top 5%: {recall_5_percent:.4f}")
-#     print("\nClassification Report:")
-#     print(classification_report(y_test, y_pred))
-
-
-# def evaluate_model(model, X_test, y_test):
-#     # Model predictions
-#     y_pred = model.predict(X_test)
-#     y_proba = model.predict_proba(X_test)[:, 1]
-#
-#     # Calculate basic metrics
-#     accuracy = accuracy_score(y_test, y_pred)
-#     precision = precision_score(y_test, y_pred)
-#     recall = recall_score(y_test, y_pred)
-#     roc_auc = roc_auc_score(y_test, y_proba)
-#
-#     print(f"Accuracy: {accuracy:.4f}")
-#     print(f"Precision: {precision:.4f}")
-#     print(f"Recall: {recall:.4f}")
-#     print(f"ROC AUC: {roc_auc:.4f}")
-#
-#     # Classification report
-#     print("\nClassification Report:")
-#     print(classification_report(y_test, y_pred))
-#
-#     # Calculate metrics for Top 2% and 5% risk predictions
-#     top_2_percent_threshold = np.percentile(y_proba, 98)
-#     top_5_percent_threshold = np.percentile(y_proba, 95)
-#
-#     # Predictions for the highest risk categories
-#     top_2_preds = (y_proba >= top_2_percent_threshold).astype(int)
-#     top_5_preds = (y_proba >= top_5_percent_threshold).astype(int)
-#
-#     top_2_recall = recall_score(y_test, top_2_preds)
-#     top_5_recall = recall_score(y_test, top_5_preds)
-#
-#     print(f"Recall for Top 2%: {top_2_recall:.4f}")
-#     print(f"Recall for Top 5%: {top_5_recall:.4f}")
 
 
 def evaluate_model(model, X_test, y_test, optimal_threshold=0.5):

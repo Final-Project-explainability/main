@@ -1,7 +1,9 @@
+import os
+
 import pandas as pd
 
 
-def load_data(file_path):
+def load_data():
     """
     Load dataset from the provided CSV file.
     Args:
@@ -10,6 +12,7 @@ def load_data(file_path):
         pd.DataFrame: Loaded dataset as a pandas DataFrame.
     """
     print('Loading dataset...')
+    file_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'training_v2.csv')
     try:
         data = pd.read_csv(file_path)
         print(f"Data loaded successfully from {file_path}")
