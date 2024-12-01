@@ -1,6 +1,7 @@
 import shap
 from Model import *
 from explainability.src.ModelManager import ModelManager
+from main import *
 
 
 def explain_model_with_shap(model, X_train):
@@ -38,17 +39,9 @@ def explain_model_with_shap(model, X_train):
     return shap_values
 
 
-def explain_model_with_shap2(model, X_train):
-    if isinstance(model, (GradientBoostingClassifier, xgb.XGBClassifier, lgb.LGBMClassifier)):
-        explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(X_train)
-        print("Using TreeExplainer for tree-based model.")
-    elif isinstance(model, LogisticRegression):
-        explainer = shap.KernelExplainer(model.predict, X_train)
-        shap_values = explainer.shap_values(X_train)
-        print("Using KernelExplainer for logistic regression model.")
-    else:
-        explainer = shap.KernelExplainer(model.predict, X_train)
-        shap_values = explainer.shap_values(X_train)
-        print("Using KernelExplainer for general model.")
-    shap.summary_plot(shap_values, X_train)
+def explain_model_with_lime(model, X_train, X_test):
+    explainer = lime_tabular.LimeTabularExplainer(X_train.values, feature_names=X_train.columns,
+                                                  class_names=['Non-death', 'Death'], discretize_continuous=True)
+    explanation = explainer.explain_instance(X_test.values[0], model.predict_proba)
+    explanation.show_in_notebook()
+

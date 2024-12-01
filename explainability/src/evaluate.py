@@ -9,6 +9,7 @@ from sklearn.metrics import (
 )
 import numpy as np
 
+
 def top_percent_recall(model, X_test, y_test, percentage):
     """
     Calculate recall for the top X% of predicted probabilities.

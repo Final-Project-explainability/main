@@ -16,15 +16,6 @@ import lime
 from lime import lime_tabular
 import matplotlib.pyplot as plt
 
-# Dictionary for model file paths
-MODEL_PATHS = {
-    'default': "gradient_boosting_model.joblib",
-    'tuned': "tuned_gradient_boosting_model.joblib",
-    'xgboost': "xgboost_model.joblib",
-    'logistic': "logistic_regression_model.joblib",
-    'lightgbm': "lightgbm_model.joblib"  # Path for LightGBM model
-}
-
 
 # General function to train or load a model
 def train_or_load_model(model_name, train_func, X_train, y_train):
@@ -92,14 +83,14 @@ def analyze_individual_risk(model, X_test):
             print("Invalid input. Please enter a numeric row number.")
 
 
-def select_and_train_model(X_train, y_train, model_choice='default'):
+def select_and_train_model(X_train, y_train, model_choice='GradientBoostingClassifier'):
     """Select, train or load a model based on the given choice."""
     model_mapping = {
         'tuned': tune_model,
         'XGBClassifier': train_xgboost,
         'LogisticRegression': train_logistic_regression,
-        'lightgbm': train_lightgbm,
-        'default': train_model
+        'LGBMClassifier': train_lightgbm,
+        'GradientBoostingClassifier': train_gradient_boosting
     }
 
     train_func = model_mapping.get(model_choice)
@@ -107,7 +98,7 @@ def select_and_train_model(X_train, y_train, model_choice='default'):
 
 
 # Main function
-def main(model_choice='default', balance_method=None):
+def main(model_choice='GradientBoostingClassifier', balance_method=None):
     data = load_data()
 
     if data is None:
@@ -139,26 +130,18 @@ def main(model_choice='default', balance_method=None):
     model = select_and_train_model(X_train, y_train, model_choice)
 
     evaluate_model(model, X_test, y_test)
+
+    # Functions for SHAP and LIME explanations remain the same
     Explainer.explain_model_with_shap(model, X_train_balanced)
-    explain_model_with_lime(model, X_train_balanced, X_test)
+    Explainer.explain_model_with_lime(model, X_train_balanced, X_test)
 
     # Call function to analyze mortality risk for a specific individual
     analyze_individual_risk(model, X_test)
 
 
-# Functions for SHAP and LIME explanations remain the same
-
-
-def explain_model_with_lime(model, X_train, X_test):
-    explainer = lime_tabular.LimeTabularExplainer(X_train.values, feature_names=X_train.columns,
-                                                  class_names=['Non-death', 'Death'], discretize_continuous=True)
-    explanation = explainer.explain_instance(X_test.values[0], model.predict_proba)
-    explanation.show_in_notebook()
-
-
 if __name__ == "__main__":
     # main(model_choice='lightgbm')  # You can choose the new LightGBM model here
-    main(model_choice="LogisticRegression")
+    main(model_choice="XGBClassifier")
     # main(model_choice='logistic', balance_method='smote')
     # main(model_choice='logistic', balance_method='undersample')
     # main(model_choice='tuned random')

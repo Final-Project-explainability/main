@@ -10,6 +10,7 @@ import optuna
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import cross_val_score
 import random
+import json
 
 from explainability.src.FeatureFilteredXGB import FeatureFilteredXGB
 
@@ -17,7 +18,7 @@ random.seed(42)
 np.random.seed(42)
 
 
-def train_model(X_train, y_train, model_path="gradient_boosting_model.joblib"):
+def train_gradient_boosting(X_train, y_train, model_path="gradient_boosting_model.joblib"):
     if os.path.exists(model_path):
         model = joblib.load(model_path)
         print("Gradient Boosting model loaded from file.")
@@ -196,10 +197,6 @@ def train_model(X_train, y_train, model_path="gradient_boosting_model.joblib"):
 #         print("XGBoost model trained and saved to file!")
 #
 #     return model
-import json
-
-import numpy as np
-
 
 def feature_elimination_by_importance(X_train, y_train, X_val, y_val):
     """

@@ -5,7 +5,7 @@ import hashlib
 
 
 class ModelManager:
-    CONFIG_PATH = "model_configs.json"  # Static path for configuration file
+    CONFIG_PATH = "jsons/model_configs.json"  # Static path for configuration file
 
     @staticmethod
     def _load_config():
