@@ -2,5 +2,9 @@
     "XGBClassifier": {
         "latest_model": "models/XGBClassifier/XGBClassifier_919797bb649c23e82f032d876cd8dfc42c1f7270dce7e9f8bd0828a156bb92ae.joblib",
         "latest_shap": "models/XGBClassifier/XGBClassifier_919797bb649c23e82f032d876cd8dfc42c1f7270dce7e9f8bd0828a156bb92ae_shap.pkl"
+    },
+    "GradientBoostingClassifier": {
+        "latest_model": "models/GradientBoostingClassifier/GradientBoostingClassifier_036cbcf945fb29b194e1b82e34e5c2bd7a102bdb7f10c2808d96380b9fac4d10.joblib",
+        "latest_shap": "models/GradientBoostingClassifier/GradientBoostingClassifier_036cbcf945fb29b194e1b82e34e5c2bd7a102bdb7f10c2808d96380b9fac4d10_shap.pkl"
     }
 }

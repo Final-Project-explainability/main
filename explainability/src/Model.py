@@ -18,15 +18,10 @@ random.seed(42)
 np.random.seed(42)
 
 
-def train_gradient_boosting(X_train, y_train, model_path="gradient_boosting_model.joblib"):
-    if os.path.exists(model_path):
-        model = joblib.load(model_path)
-        print("Gradient Boosting model loaded from file.")
-    else:
-        model = GradientBoostingClassifier()
-        model.fit(X_train, y_train)
-        joblib.dump(model, model_path)
-        print("Gradient Boosting model trained and saved to file!")
+def train_gradient_boosting(X_train, y_train):
+    print("train gradient boosting")
+    model = GradientBoostingClassifier()
+    model.fit(X_train, y_train)
     return model
 
 
