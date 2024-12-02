@@ -141,7 +141,7 @@ def main(model_choice='GradientBoostingClassifier', balance_method=None):
 
 if __name__ == "__main__":
     # main(model_choice='lightgbm')  # You can choose the new LightGBM model here
-    main(model_choice="XGBClassifier")
+    main()
     # main(model_choice='logistic', balance_method='smote')
     # main(model_choice='logistic', balance_method='undersample')
     # main(model_choice='tuned random')
