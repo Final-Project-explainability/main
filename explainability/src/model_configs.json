@@ -1,0 +1,6 @@
+{
+    "LogisticRegression": {
+        "latest_model": "models/LogisticRegression/LogisticRegression_fedb5734e589e681ba1e683a78471dc8e0ab306111991ed976672254c9da2f32.joblib",
+        "latest_shap": "models/LogisticRegression/LogisticRegression_fedb5734e589e681ba1e683a78471dc8e0ab306111991ed976672254c9da2f32_shap.pkl"
+    }
+}
