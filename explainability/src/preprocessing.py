@@ -1,8 +1,33 @@
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
 import pandas as pd
 import numpy as np
+
+
+def normalize_data(X_train, X_test):
+    """
+    Normalize the dataset using StandardScaler (mean=0, std=1).
+
+    Args:
+        X_train: The training features (pandas DataFrame).
+        X_test: The test features (pandas DataFrame).
+
+    Returns:
+        X_train_normalized: The normalized training set (pandas DataFrame).
+        X_test_normalized: The normalized test set (pandas DataFrame).
+    """
+    # Initialize the StandardScaler
+    scaler = StandardScaler()
+
+    # Fit the scaler to the training data and transform the train set
+    X_train_normalized = scaler.fit_transform(X_train)
+
+    # Transform the test set using the same scaler (no fitting on the test set)
+    X_test_normalized = scaler.transform(X_test)
+
+    # Return as DataFrame with the same column names
+    return pd.DataFrame(X_train_normalized, columns=X_train.columns), pd.DataFrame(X_test_normalized, columns=X_test.columns)
 
 
 def preprocess_data(data):
@@ -67,7 +92,6 @@ def feature_engineering(data):
     # Drop columns that are purely identifiers or irrelevant to modeling (e.g., patient or hospital IDs)
     data = data.drop(columns=['patient_id', 'encounter_id'], errors='ignore')
 
-
     # # 1. Aggregated Features (Range of Vital Signs)
     # data['d1_diasbp_range'] = data['d1_diasbp_max'] - data['d1_diasbp_min']
     # data['d1_heartrate_range'] = data['d1_heartrate_max'] - data['d1_heartrate_min']
@@ -128,10 +152,6 @@ def feature_engineering(data):
     ).astype(int)
 
     return data
-
-
-import pandas as pd
-import numpy as np
 
 
 def clean_data(data):

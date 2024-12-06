@@ -23,9 +23,24 @@ class ModelManager:
 
     @staticmethod
     def _hash_model(model):
-        """Calculate a hash for the model."""
-        model_str = str(model.get_params()) if hasattr(model, 'get_params') else str(model)
-        return hashlib.sha256(model_str.encode('utf-8')).hexdigest()
+        """
+        Calculate a hash for the model, ensuring the hash is unique
+        for models trained on different features or having different parameters.
+
+        Parameters:
+            model: The machine learning model.
+
+        Returns:
+            A hash string representing the model.
+        """
+        # Get model parameters as string
+        model_params = str(model.get_params()) if hasattr(model, 'get_params') else str(model)
+
+        # Combine model parameters and feature count
+        combined_str = model_params + str(getattr(model, 'n_features_in_', ''))
+
+        # Generate and return the hash
+        return hashlib.sha256(combined_str.encode('utf-8')).hexdigest()
 
     @staticmethod
     def save_model_and_shap(model, shap_values):

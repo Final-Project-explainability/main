@@ -240,7 +240,7 @@ def feature_elimination_by_importance(X_train, y_train, X_val, y_val):
     return best_features
 
 
-def train_xgboost(X_train, y_train, params_path="best_params.json", fine_tune=False, long_run=False):
+def train_xgboost(X_train, y_train, params_path="jsons/best_params.json", fine_tune=False, long_run=False):
     """
     Train an XGBoost model with optional hyperparameter tuning, feature selection, and long-run optimization.
     Args:
@@ -358,7 +358,7 @@ def train_logistic_regression(X_train, y_train):
     return model
 
 
-def train_lightgbm(X_train, y_train, model_path="lightgbm_model.joblib"):
+def train_lightgbm(X_train, y_train):
     """
     Train a LightGBM model using the training data.
     Args:
@@ -368,14 +368,10 @@ def train_lightgbm(X_train, y_train, model_path="lightgbm_model.joblib"):
     Returns:
         model: Trained LightGBM model.
     """
-    if os.path.exists(model_path):
-        model = joblib.load(model_path)
-        print("LightGBM model loaded from file.")
-    else:
-        model = lgb.LGBMClassifier(objective='binary', metric='binary_logloss')
-        model.fit(X_train, y_train)
-        joblib.dump(model, model_path)
-        print("LightGBM model trained and saved to file!")
+
+    model = lgb.LGBMClassifier(objective='binary', metric='binary_logloss')
+    model.fit(X_train, y_train)
+    print("LightGBM model trained and saved to file!")
     return model
 
 
