@@ -3,7 +3,7 @@ This module contains the conjunction class
 
 """
 import numpy as np
-from utils import *
+from .utils import *
 
 class Conjunction():
     """

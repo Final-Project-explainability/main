@@ -3,7 +3,7 @@ This module contains functions for extracting information of individual trees fr
 """
 
 import re
-from conjunction import *
+from .conjunction import *
 #internal node parser:
 feature_regex = re.compile('\D+(?P<node_index>\d+):\[(?P<feature>[^<]+)<(?P<value>[^\]]+)\D+(?P<left>\d+)\D+(?P<right>\d+)\D+(?P<missing>\d+)')
 

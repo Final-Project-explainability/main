@@ -3,6 +3,67 @@ from main import *
 import pandas as pd
 import matplotlib.pyplot as plt
 from lime import lime_tabular
+from XGBoostTreeApproximator.FBT import FBT
+from sklearn import tree
+import graphviz
+
+
+def train_and_visualize_fbt(X_train, y_train, xgb_model, max_depth=5, min_forest_size=10,
+                            max_number_of_conjunctions=100, pruning_method='auc'):
+    """
+    Trains an interpretable FBT model based on the given XGBoost model and training data,
+    and visualizes the resulting decision tree.
+
+    Args:
+        X_train (DataFrame): The training data (features only).
+        y_train (Series): The training labels.
+        xgb_model (xgboost.Booster): Pre-trained XGBoost model.
+        max_depth (int): Maximum depth for the resulting decision tree.
+        min_forest_size (int): Minimum number of trees to consider after pruning.
+        max_number_of_conjunctions (int): Maximum number of rules/conjunctions to extract.
+        pruning_method (str): Method for pruning the forest ('auc' or other criteria).
+
+    Returns:
+        FBT: The trained FBT model.
+    """
+    # Combine X_train and y_train into a single DataFrame
+    train_data = X_train.copy()
+    train_data['hospital_death'] = y_train  # Add the label column
+
+    # Extract feature names
+    feature_cols = X_train.columns.tolist()
+    label_col = 'hospital_death'  # Name of the label column
+
+    # Prepare FBT
+    fbt = FBT(max_depth=max_depth,
+              min_forest_size=min_forest_size,
+              max_number_of_conjunctions=max_number_of_conjunctions,
+              pruning_method=pruning_method)
+
+    # Fit the FBT model to the training data
+    fbt.fit(train_data, feature_cols, label_col, xgb_model)
+
+    print("FBT model trained successfully.")
+
+    # Visualize the tree (example code for visualization)
+    try:
+        print("Generating visualization...")
+        dot_data = tree.export_graphviz(
+            fbt.tree,
+            out_file=None,
+            feature_names=feature_cols,
+            filled=True,
+            rounded=True,
+            special_characters=True
+        )
+        graph = graphviz.Source(dot_data)
+        graph.render("FBT_tree_visualization")  # Save as FBT_tree_visualization.pdf
+        print("FBT tree visualization saved as 'FBT_tree_visualization.pdf'.")
+        graph.view()  # Open the visualization in the default viewer
+    except Exception as e:
+        print(f"Failed to generate visualization: {e}")
+
+    return fbt
 
 
 def explain_model_with_lime(model, X_train, X_test):
@@ -120,9 +181,10 @@ def explain_model_with_shap(model, X_train):
     return shap_values
 
 
-def explain_model(model, X_train, X_test):
+def explain_model(model, X_train, X_test, y_train):
     if isinstance(model, LogisticRegression):
         explain_logistic_regression_with_coefficients(model, X_train)
     else:
         explain_model_with_shap(model, X_train)
         explain_model_with_lime(model, X_train, X_test)
+        train_and_visualize_fbt(xgb_model=model, X_train=X_train, y_train=y_train)

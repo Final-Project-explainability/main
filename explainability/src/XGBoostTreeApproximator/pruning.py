@@ -2,9 +2,9 @@
 This module contain the Pruner function for pruning a decision forest
 """
 import pandas as pd
-import numpy as np
-from utils import *
+from .utils import *
 from sklearn.metrics import cohen_kappa_score
+
 
 class Pruner():
     """

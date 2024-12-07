@@ -3,7 +3,7 @@ This module contain a tree class and several functions that are used for constru
 """
 
 from scipy.stats import entropy
-from utils import *
+from .utils import *
 
 class Tree():
     """

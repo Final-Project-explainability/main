@@ -4,9 +4,10 @@ This module contains a forest based tree class (FBT).
 The class takes an XGBoost as an input and generates a decision aims at preserving the predictive performance of
 the XGboost model
 """
-from conjunctionset import *
-from tree import *
-from pruning import *
+from .conjunctionset import *
+from .tree import *
+from .pruning import *
+
 
 class FBT():
     """

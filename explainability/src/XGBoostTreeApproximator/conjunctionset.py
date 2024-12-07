@@ -3,11 +3,10 @@ This module contains the ConjunctionSet class
 """
 
 from statsmodels.distributions.empirical_distribution import ECDF
-from TreesExtraction import *
+from .TreesExtraction import *
 from collections import Counter
-from pruning import *
-from pyod.models.knn import KNN
-from pyod.models.lof import LOF
+from .pruning import *
+
 
 class ConjunctionSet():
     """

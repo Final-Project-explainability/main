@@ -82,7 +82,7 @@ def main(model_choice='GradientBoostingClassifier', balance_method=None, load_mo
     evaluate_model(model, X_test, y_test)
 
     # Functions for SHAP and LIME explanations remain the same
-    GlobalExplainer.explain_model(model, X_train, X_test)
+    GlobalExplainer.explain_model(model, X_train, X_test, y_train)
 
     # Call function to analyze mortality risk for a specific individual
     LocalExplainer.analyze_individual_risk(model, X_test, y_test)
@@ -90,7 +90,7 @@ def main(model_choice='GradientBoostingClassifier', balance_method=None, load_mo
 
 if __name__ == "__main__":
     # main(model_choice='lightgbm')  # You can choose the new LightGBM model here
-    main('LogisticRegression')
+    main('XGBClassifier')
     # main(model_choice='logistic', balance_method='smote')
     # main(model_choice='logistic', balance_method='undersample')
     # main(model_choice='tuned random')
