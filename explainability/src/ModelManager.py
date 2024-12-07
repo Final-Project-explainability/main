@@ -43,18 +43,22 @@ class ModelManager:
         return hashlib.sha256(combined_str.encode('utf-8')).hexdigest()
 
     @staticmethod
-    def save_model_and_shap(model, shap_values):
-        """Save the model and its SHAP values."""
-        config = ModelManager._load_config()
+    def get_path(model):
         model_hash = ModelManager._hash_model(model)
 
         # Determine paths for saving
         model_type = type(model).__name__
         model_dir = f"models/{model_type}"
         os.makedirs(model_dir, exist_ok=True)
+        return f"{model_dir}/{model_type}_{model_hash}"
 
-        model_path = f"{model_dir}/{model_type}_{model_hash}.joblib"
-        shap_path = f"{model_dir}/{model_type}_{model_hash}_shap.pkl"
+    @staticmethod
+    def save_model_and_shap(model, shap_values):
+        """Save the model and its SHAP values."""
+
+        path = ModelManager.get_path(model)
+        model_path = path + ".joblib"
+        shap_path = path + "_shap.pkl"
 
         # Save model and SHAP values
         joblib.dump(model, model_path)
@@ -62,6 +66,8 @@ class ModelManager:
             joblib.dump(shap_values, f)
 
         # Update configuration
+        config = ModelManager._load_config()
+        model_type = type(model).__name__
         config[model_type] = {
             "latest_model": model_path,
             "latest_shap": shap_path,
@@ -89,3 +95,14 @@ class ModelManager:
             with open(shap_path, 'rb') as f:
                 return joblib.load(f)
         raise ValueError(f"No SHAP values for model of type {model_type} found in configuration.")
+
+    @staticmethod
+    def save_fbt(model, fbt):
+        fbt_path = ModelManager.get_path(model) + "_fbt.joblib"
+        joblib.dump(fbt, fbt_path)
+        print("FBT model saved as 'fbt_model.joblib'.")
+
+    @staticmethod
+    def load_fbt(model):
+        fbt_path = ModelManager.get_path(model) + "_fbt.joblib"
+        return joblib.load(fbt_path)

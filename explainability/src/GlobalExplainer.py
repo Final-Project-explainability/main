@@ -26,24 +26,29 @@ def train_and_visualize_fbt(X_train, y_train, xgb_model, max_depth=5, min_forest
     Returns:
         FBT: The trained FBT model.
     """
-    # Combine X_train and y_train into a single DataFrame
-    train_data = X_train.copy()
-    train_data['hospital_death'] = y_train  # Add the label column
+    try:
+        fbt = ModelManager.load_fbt(xgb_model)
+    except:  # train fbt base on the given model
+        # Combine X_train and y_train into a single DataFrame
+        train_data = X_train.copy()
+        train_data['hospital_death'] = y_train  # Add the label column
 
-    # Extract feature names
-    feature_cols = X_train.columns.tolist()
-    label_col = 'hospital_death'  # Name of the label column
+        # Extract feature names
+        feature_cols = X_train.columns.tolist()
+        label_col = 'hospital_death'  # Name of the label column
 
-    # Prepare FBT
-    fbt = FBT(max_depth=max_depth,
-              min_forest_size=min_forest_size,
-              max_number_of_conjunctions=max_number_of_conjunctions,
-              pruning_method=pruning_method)
+        # Prepare FBT
+        fbt = FBT(max_depth=max_depth,
+                  min_forest_size=min_forest_size,
+                  max_number_of_conjunctions=max_number_of_conjunctions,
+                  pruning_method=pruning_method)
 
-    # Fit the FBT model to the training data
-    fbt.fit(train_data, feature_cols, label_col, xgb_model)
+        # Fit the FBT model to the training data
+        fbt.fit(train_data, feature_cols, label_col, xgb_model)
 
-    print("FBT model trained successfully.")
+        print("FBT model trained successfully.")
+
+        ModelManager.save_fbt(xgb_model, fbt)
 
     # Visualize the tree (example code for visualization)
     try:
