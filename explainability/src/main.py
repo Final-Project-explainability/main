@@ -85,7 +85,7 @@ def main(model_choice='GradientBoostingClassifier', balance_method=None, load_mo
     GlobalExplainer.explain_model(model, X_train, X_test)
 
     # Call function to analyze mortality risk for a specific individual
-    LocalExplainer.analyze_individual_risk(model, X_test)
+    LocalExplainer.analyze_individual_risk(model, X_test, y_test)
 
 
 if __name__ == "__main__":

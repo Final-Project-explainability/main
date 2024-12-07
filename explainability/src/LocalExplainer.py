@@ -23,7 +23,7 @@ def explain_prediction(model, X_instance, prob_death):
         None. Displays the explanation via SHAP or other methods.
     """
     if isinstance(model, (xgb.XGBClassifier, lgb.LGBMClassifier, RandomForestClassifier)):
-        explain_with_shap(model, X_instance)
+        explain_with_shap(model, X_instance, prob_death)
     elif isinstance(model, DecisionTreeClassifier):
         explain_with_decision_tree(model, X_instance)
     elif isinstance(model, LogisticRegression):
@@ -32,43 +32,83 @@ def explain_prediction(model, X_instance, prob_death):
         print("Model type is not supported for explanation.")
 
 
-def explain_with_shap(model, X_instance):
+def explain_with_shap(model, X_instance, predicted_probability):
     """
     Explains a prediction using SHAP for complex models like XGBoost, LightGBM, and Random Forest.
+    Displays the 10 most important features and the sum of the remaining features in descending order of importance.
 
     Args:
         model: The trained model.
         X_instance: A pandas DataFrame row representing the instance to explain.
+        predicted_probability: The predicted probability from the model.
 
     Returns:
         None. Displays the SHAP explanation.
     """
-    # Create SHAP explainer object
+    # Create a SHAP explainer object
     explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(X_instance)
 
-    # Get the base value (expected value)
+    # Extract the base value (expected value of the model predictions)
     base_value = explainer.expected_value
 
-    print("Prediction explanation using SHAP:")
+    # Extract SHAP values for class 1 (assuming binary classification)
+    shap_values_class_1 = shap_values[1] if isinstance(shap_values, list) else shap_values
 
-    # Initialize SHAP visualization
-    shap.initjs()
+    # Combine feature names and SHAP values into a DataFrame
+    feature_contributions = pd.DataFrame({
+        "Feature": X_instance.columns,
+        "Contribution": shap_values_class_1[0],
+        "Absolute Contribution": np.abs(shap_values_class_1[0])
+    })
 
-    # Create the SHAP explanation object for the waterfall plot
-    explanation = shap.Explanation(values=shap_values[0], base_values=base_value, data=X_instance.iloc[0])
+    # Sort features by absolute contribution to highlight the most impactful ones
+    feature_contributions = feature_contributions.sort_values(by="Absolute Contribution", ascending=False)
 
-    # Create waterfall plot
-    shap.waterfall_plot(explanation)
+    # Select the top 10 most important features
+    top_10_features = feature_contributions.head(10)
+    top_10_features = top_10_features.sort_values(by="Absolute Contribution")
 
-    # After creating the plot, we can adjust the layout for better readability
-    plt.gcf().set_size_inches(14, 10)  # Increase figure size to fit feature names properly
-    plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)  # Adjust margins if needed
+    # Calculate the sum of the remaining features' contributions
+    other_features_contribution = feature_contributions.iloc[10:]["Contribution"].sum()
 
-    # Rotate the feature names if necessary
-    plt.xticks(rotation=45, ha='right')  # Rotate feature names for better visibility
+    # Add a row representing the sum of the other features
+    other_features_row = pd.DataFrame({
+        "Feature": ["Other Features Contribution"],
+        "Contribution": [other_features_contribution],
+        "Absolute Contribution": [np.abs(other_features_contribution)]
+    })
 
-    # Show the plot
+    # Combine top 10 features and the other features' contribution into a single DataFrame
+    explanation_df = pd.concat([other_features_row, top_10_features], ignore_index=True)
+
+    # Create a horizontal bar chart to visualize positive and negative contributions
+    plt.figure(figsize=(10, 7))
+
+    # Set colors: blue for positive contributions, red for negative contributions
+    colors = ['#1f77b4' if x < 0 else '#d62728' for x in explanation_df["Contribution"]]
+
+    # Plot horizontal bars
+    plt.barh(explanation_df["Feature"], explanation_df["Contribution"], color=colors)
+
+    # Add a vertical line for the base value (expected value)
+    plt.axvline(x=base_value, color='gray', linestyle='--', label=f"Base Value: {base_value:.4f}")
+
+    # Add a vertical line for the predicted probability
+    plt.axvline(x=predicted_probability, color='green', linestyle='-',
+                label=f"Predicted Probability: {predicted_probability:.4f}")
+
+    # Add labels, title, and legend
+    plt.xlabel("Contribution to Prediction")
+    plt.title("Feature Contributions Using SHAP")
+    plt.legend()
+
+    # Annotate each bar with its contribution value
+    for i, v in enumerate(explanation_df["Contribution"]):
+        plt.text(v, i, f"{v:.2f}", va='center', ha='left' if v > 0 else 'right', color='black')
+
+    # Adjust layout for better display
+    plt.tight_layout()
     plt.show()
 
 
@@ -157,10 +197,6 @@ def explain_with_logistic_regression(model, X_instance, predicted_probability):
     # Title for the plot
     plt.title("Feature Contributions for Logistic Regression Prediction.    " + f"Probability of Death: {predicted_probability:.4f} ")
 
-    # Annotate with the total contribution and prediction probability
-    plt.figtext(0.15, -0.05, f"Total Contribution: {total_contribution:.4f}", fontsize=12, ha='left')
-    plt.figtext(0.15, -0.1, f"Prediction (Probability of Death): {predicted_probability:.4f}", fontsize=12, ha='left')
-
     # Adjust layout to make space for the text annotations
     plt.tight_layout(rect=(0, 0, 0.9, 1))  # Adjust the layout to prevent overlap with text
 
@@ -168,13 +204,14 @@ def explain_with_logistic_regression(model, X_instance, predicted_probability):
     plt.show()
 
 
-def analyze_individual_risk(model, X_test):
+def analyze_individual_risk(model, X_test, y_test):
     """
     Analyze and visualize the mortality risk for a specific row in the dataset.
 
     Args:
         model: The trained model.
         X_test (DataFrame): The test data to get individual patient data.
+        y_test:
     """
     while True:
         try:
@@ -192,6 +229,12 @@ def analyze_individual_risk(model, X_test):
             # Predict the death probability for this patient
             prob_death = model.predict_proba(individual_data)[:, 1]  # Assuming class 1 is 'death'
             print(f"Predicted mortality risk for this patient: {prob_death[0]:.4f}")
+
+            death = y_test.iloc[row_num]
+            if death == 0:
+                print("The patient was alive in the end of the hospitalization")
+            else:
+                print("The patient was dead in the end of the hospitalization")
 
             explain_prediction(model, individual_data, prob_death[0])
 
