@@ -180,10 +180,6 @@ def explain_with_logistic_regression(model, X_instance, predicted_probability):
 
     explanation_df = pd.concat([top_10_features_df, other_contributions_row, contributions_sum_row], ignore_index=True)
 
-    # Print the explanation
-    print("Prediction explanation using Logistic Regression:")
-    print(explanation_df)
-
     # Plot the feature contributions
     plt.figure(figsize=(10, 6))
     sns.barplot(x='Contribution', y='Feature', data=explanation_df, palette='viridis')
