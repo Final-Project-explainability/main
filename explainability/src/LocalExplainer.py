@@ -215,8 +215,8 @@ def analyze_individual_risk(model, X_test, y_test):
     """
     while True:
         try:
-            row_num = int(input("Enter row number for analysis (enter 0 to exit): "))
-            if row_num == 0:
+            row_num = int(input("Enter row number for analysis (enter -1 to exit): "))
+            if row_num == -1:
                 print("Exiting analysis.")
                 break
 
