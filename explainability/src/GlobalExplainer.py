@@ -43,8 +43,10 @@ def train_and_visualize_fbt(X_train, y_train, xgb_model, max_depth=5, min_forest
                   max_number_of_conjunctions=max_number_of_conjunctions,
                   pruning_method=pruning_method)
 
+        X_train_sample = train_data.sample(frac=0.1, random_state=42)
+
         # Fit the FBT model to the training data
-        fbt.fit(train_data, feature_cols, label_col, xgb_model)
+        fbt.fit(X_train_sample, feature_cols, label_col, xgb_model)
 
         print("FBT model trained successfully.")
 
