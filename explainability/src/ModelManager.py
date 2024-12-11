@@ -87,14 +87,9 @@ class ModelManager:
     @staticmethod
     def load_shap(model):
         """Load SHAP values for a given model."""
-        model_type = type(model).__name__
-        config = ModelManager._load_config()
-
-        if model_type in config:
-            shap_path = config[model_type]["latest_shap"]
-            with open(shap_path, 'rb') as f:
-                return joblib.load(f)
-        raise ValueError(f"No SHAP values for model of type {model_type} found in configuration.")
+        shap_path = ModelManager.get_path(model) + "_shap.pkl"
+        with open(shap_path, 'rb') as f:
+            return joblib.load(f)
 
     @staticmethod
     def save_fbt(model, fbt):

@@ -37097,17 +37097,24 @@
             var pp_div = top_div.append('div')
                                 .classed('lime predict_proba', true);
             var pp_svg = pp_div.append('svg').style('width', '100%');
-            var pp = new lime.PredictProba(pp_svg, ["Non-death", "Death"], [0.97535640001297, 0.024643609300255775]);
+            var pp = new lime.PredictProba(pp_svg, ["Non-death", "Death"], [0.9774250388145447, 0.022574981674551964]);
             
         
         var exp_div;
             var exp = new lime.Explanation(["Non-death", "Death"]);
         
                 exp_div = top_div.append('div').classed('lime explanation', true);
+<<<<<<< Updated upstream
                 exp.show([["ventilated_apache <= 0.00", -0.0754342972250574], ["urineoutput_apache <= 1386.20", 0.05525085334303437], ["d1_lactate_min <= 1.50", -0.052894676460075285], ["aids <= 0.00", -0.04489298456163022], ["elective_surgery <= 0.00", 0.038650226501451314], ["504.00 < icu_id <= 683.00", 0.03701808171485196], ["d1_heartrate_max <= 87.00", -0.03409289695365621], ["gcs_eyes_apache <= 3.00", 0.031549492046677494], ["4.00 < gcs_verbal_apache <= 5.00", -0.030485259617290473], ["bmi <= 23.81", 0.028921411947607133]], 1, exp_div);
                 
         var raw_div = top_div.append('div');
             exp.show_raw_tabular([["ventilated_apache", "0.00", -0.0754342972250574], ["urineoutput_apache", "1386.20", 0.05525085334303437], ["d1_lactate_min", "1.50", -0.052894676460075285], ["aids", "0.00", -0.04489298456163022], ["elective_surgery", "0.00", 0.038650226501451314], ["icu_id", "594.00", 0.03701808171485196], ["d1_heartrate_max", "79.00", -0.03409289695365621], ["gcs_eyes_apache", "3.00", 0.031549492046677494], ["gcs_verbal_apache", "5.00", -0.030485259617290473], ["bmi", "20.57", 0.028921411947607133]], 1, raw_div);
+=======
+                exp.show([["ventilated_apache <= 0.00", -0.07517196576143591], ["d1_lactate_min <= 1.50", -0.06967674469296566], ["urineoutput_apache <= 1386.20", 0.053166565449077496], ["elective_surgery <= 0.00", 0.051936392627427296], ["504.00 < icu_id <= 683.00", 0.04247370756363884], ["gcs_eyes_apache <= 3.00", 0.039570020552018095], ["lymphoma <= 0.00", -0.037226555003369764], ["d1_heartrate_max <= 87.00", -0.03482524879765212], ["solid_tumor_with_metastasis <= 0.00", -0.03350113410712106], ["bmi <= 23.81", 0.03031250983095154]], 1, exp_div);
+                
+        var raw_div = top_div.append('div');
+            exp.show_raw_tabular([["ventilated_apache", "0.00", -0.07517196576143591], ["d1_lactate_min", "1.50", -0.06967674469296566], ["urineoutput_apache", "1386.20", 0.053166565449077496], ["elective_surgery", "0.00", 0.051936392627427296], ["icu_id", "594.00", 0.04247370756363884], ["gcs_eyes_apache", "3.00", 0.039570020552018095], ["lymphoma", "0.00", -0.037226555003369764], ["d1_heartrate_max", "79.00", -0.03482524879765212], ["solid_tumor_with_metastasis", "0.00", -0.03350113410712106], ["bmi", "20.57", 0.03031250983095154]], 1, raw_div);
+>>>>>>> Stashed changes
         
         </script>
         </body></html>

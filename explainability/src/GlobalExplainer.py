@@ -55,18 +55,7 @@ def train_and_visualize_fbt(X_train, y_train, xgb_model, max_depth=5, min_forest
     # Visualize the tree (example code for visualization)
     try:
         print("Generating visualization...")
-        dot_data = tree.export_graphviz(
-            fbt.tree,
-            out_file=None,
-            feature_names=feature_cols,
-            filled=True,
-            rounded=True,
-            special_characters=True
-        )
-        graph = graphviz.Source(dot_data)
-        graph.render("FBT_tree_visualization")  # Save as FBT_tree_visualization.pdf
-        print("FBT tree visualization saved as 'FBT_tree_visualization.pdf'.")
-        graph.view()  # Open the visualization in the default viewer
+        print(fbt.get_decision_paths(X_train))
     except Exception as e:
         print(f"Failed to generate visualization: {e}")
 
