@@ -53,6 +53,24 @@ class ModelManager:
         return f"{model_dir}/{model_type}_{model_hash}"
 
     @staticmethod
+    def save_model(model):
+        """Save the model and its SHAP values."""
+
+        path = ModelManager.get_path(model)
+        model_path = path + ".joblib"
+
+        # Save model
+        joblib.dump(model, model_path)
+        # Update configuration
+        config = ModelManager._load_config()
+        model_type = type(model).__name__
+        config[model_type] = {
+            "latest_model": model_path
+        }
+        ModelManager._save_config(config)
+        print(f"Model saved for {model_type}. Paths updated in config.")
+
+    @staticmethod
     def save_model_and_shap(model, shap_values):
         """Save the model and its SHAP values."""
 
