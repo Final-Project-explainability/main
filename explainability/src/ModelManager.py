@@ -81,6 +81,7 @@ class ModelManager:
         config = ModelManager._load_config()
         if model_type in config:
             model_path = config[model_type]["latest_model"]
+            print(f"loading model from {model_path}")
             return joblib.load(model_path)
         raise ValueError(f"No model of type {model_type} found in configuration.")
 

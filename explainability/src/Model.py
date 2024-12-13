@@ -11,187 +11,226 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import cross_val_score
 import random
 import json
-
+from sklearn.tree import DecisionTreeClassifier
+import matplotlib.pyplot as plt
+import pandas as pd
+from sklearn.model_selection import GridSearchCV
 from explainability.src.FeatureFilteredXGB import FeatureFilteredXGB
+import json
+import os
 
 random.seed(42)
 np.random.seed(42)
 
+#################################################  ONE_DECISION_TREE  #################################################
+def train_pruned_decision_tree(X_train, y_train):
+    """
+    Train a pruned Decision Tree classifier using ccp_alpha.
+    Args:
+        X_train: Training feature set.
+        y_train: Training labels.
+    Returns:
+        pruned_model: Pruned Decision Tree model.
+    """
+    # Train initial tree
+    model = DecisionTreeClassifier(random_state=42)
+    model.fit(X_train, y_train)
 
+    # Get cost complexity pruning path
+    path = model.cost_complexity_pruning_path(X_train, y_train)
+    ccp_alphas = path.ccp_alphas  # List of alphas
+
+    # Find the best alpha using cross-validation
+    best_alpha = 0
+    best_score = 0
+    for alpha in ccp_alphas:
+        temp_model = DecisionTreeClassifier(random_state=42, ccp_alpha=alpha)
+        temp_model.fit(X_train, y_train)
+        score = cross_val_score(temp_model, X_train, y_train, cv=5, scoring='roc_auc').mean()
+        if score > best_score:
+            best_score = score
+            best_alpha = alpha
+
+    print(f"Best ccp_alpha: {best_alpha}")
+    pruned_model = DecisionTreeClassifier(random_state=42, ccp_alpha=best_alpha)
+    pruned_model.fit(X_train, y_train)
+    return pruned_model
+
+
+def tune_decision_tree(X_train, y_train):
+    """
+    Tune hyperparameters of a Decision Tree using GridSearchCV.
+    Args:
+        X_train: Training feature set.
+        y_train: Training labels.
+    Returns:
+        best_model: Best Decision Tree model after tuning.
+    """
+    param_grid = {
+        'max_depth': [3, 5, 10, None],
+        'min_samples_split': [2, 5, 10],
+        'min_samples_leaf': [1, 2, 4],
+        'criterion': ['gini', 'entropy']
+    }
+
+    grid_search = GridSearchCV(
+        estimator=DecisionTreeClassifier(random_state=42),
+        param_grid=param_grid,
+        scoring='roc_auc',
+        cv=5,
+        n_jobs=-1
+    )
+    grid_search.fit(X_train, y_train)
+
+    print("Best Parameters:", grid_search.best_params_)
+    best_model = grid_search.best_estimator_
+    return best_model
+
+
+# def train_decision_tree(X_train, y_train, max_depth=None, criterion="gini"):
+#     """
+#     Train a single Decision Tree classifier.
+#     Args:
+#         X_train: Training feature set.
+#         y_train: Training labels.
+#         max_depth: Maximum depth of the tree (default is None, meaning the tree will grow until all leaves are pure).
+#         criterion: Splitting criterion ("gini" for Gini Impurity or "entropy" for Information Gain).
+#     Returns:
+#         model: Trained Decision Tree model.
+#     """
+#     print("Training a single Decision Tree...")
+#     # Initialize and train the Decision Tree
+#     model = DecisionTreeClassifier(max_depth=max_depth, criterion=criterion, random_state=42)
+#     model.fit(X_train, y_train)
+#     print("Decision Tree training completed.")
+#     return model
+
+from sklearn.model_selection import GridSearchCV
+from sklearn.tree import DecisionTreeClassifier
+
+# def train_decision_tree(X_train, y_train, max_depth=None, criterion="gini"):
+#     """
+#     Train a single Decision Tree classifier with hyperparameter tuning.
+#     Args:
+#         X_train: Training feature set.
+#         y_train: Training labels.
+#         max_depth: Maximum depth of the tree (default is None, meaning the tree will grow until all leaves are pure).
+#         criterion: Splitting criterion ("gini" for Gini Impurity or "entropy" for Information Gain).
+#     Returns:
+#         model: Trained Decision Tree model.
+#     """
+#     print("Training a single Decision Tree with hyperparameter tuning...")
+#
+#     # Define hyperparameter grid
+#     param_grid = {
+#         'max_depth': [3, 5, 10, None], #5
+#         'min_samples_split': [2, 5, 10], #2
+#         'min_samples_leaf': [1, 2, 4], #1
+#         'criterion': ['gini', 'entropy']  #entropy
+#     }
+#
+#     # Perform grid search
+#     grid_search = GridSearchCV(
+#         DecisionTreeClassifier(random_state=42),
+#         param_grid,
+#         scoring='roc_auc',
+#         cv=5,
+#         n_jobs=-1
+#     )
+#     grid_search.fit(X_train, y_train)
+#
+#     # Get the best model
+#     best_model = grid_search.best_estimator_
+#     print(f"Best Parameters: {grid_search.best_params_}")
+#     return best_model
+def train_decision_tree(X_train, y_train, params_path="jsons/decision_tree_params.json"):
+    """
+    Train a single Decision Tree classifier with hyperparameter tuning and save the best parameters.
+    Args:
+        X_train: Training feature set.
+        y_train: Training labels.
+        params_path: Path to save or load best parameters as a JSON file.
+    Returns:
+        model: Trained Decision Tree model.
+    """
+    print("Training a single Decision Tree with hyperparameter tuning...")
+
+    # Define hyperparameter grid
+    param_grid = {
+        'max_depth': [3, 5, 10, None],
+        'min_samples_split': [2, 5, 10],
+        'min_samples_leaf': [1, 2, 4],
+        'criterion': ['gini', 'entropy']
+    }
+
+    # Check if we have pre-saved parameters
+    if os.path.exists(params_path):
+        with open(params_path, 'r') as file:
+            best_params = json.load(file)
+        print(f"Loaded best parameters from {params_path}: {best_params}")
+        model = DecisionTreeClassifier(**best_params, random_state=42)
+        model.fit(X_train, y_train)
+    else:
+        # Perform grid search
+        grid_search = GridSearchCV(
+            DecisionTreeClassifier(random_state=42),
+            param_grid,
+            scoring='roc_auc',
+            cv=5,
+            n_jobs=-1
+        )
+        grid_search.fit(X_train, y_train)
+
+        # Get the best parameters and model
+        best_params = grid_search.best_params_
+        print(f"Best Parameters: {best_params}")
+
+        # Save the best parameters to a JSON file
+        os.makedirs(os.path.dirname(params_path), exist_ok=True)  # Create directory if it doesn't exist
+        with open(params_path, 'w') as f:
+            json.dump(best_params, f)
+        print(f"Saved best parameters to {params_path}")
+
+        model = grid_search.best_estimator_
+
+    return model
+
+
+# def plot_feature_importances(model, feature_names):
+#     """
+#     Plot feature importances from a trained Decision Tree model.
+#     Args:
+#         model: Trained Decision Tree model.
+#         feature_names: List of feature names.
+#     """
+#     if not hasattr(model, "feature_importances_"):
+#         print("The model does not have feature importances.")
+#         return
+#
+#     # Extract feature importances and sort them in descending order
+#     importances = model.feature_importances_
+#     indices = np.argsort(importances)[::-1]  # Indices of features sorted by importance
+#
+#     # Plot the feature importances as a bar chart
+#     plt.figure(figsize=(10, 6))
+#     plt.title("Feature Importances")
+#     plt.bar(range(len(importances)), importances[indices], align="center")
+#     plt.xticks(range(len(importances)), [feature_names[i] for i in indices], rotation=90)
+#     plt.xlabel("Feature")
+#     plt.ylabel("Importance")
+#     plt.tight_layout()
+#     plt.show()
+
+
+#######################################################################################################################
+
+# TODO: delete gradient?? think about it.
 def train_gradient_boosting(X_train, y_train):
     print("train gradient boosting")
     model = GradientBoostingClassifier()
     model.fit(X_train, y_train)
     return model
 
-
-# def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", tune=True):
-#     if os.path.exists(model_path):
-#         model = joblib.load(model_path)
-#         print("XGBoost model loaded from file.")
-#     else:
-#         # Set scale_pos_weight based on class imbalance
-#         scale_pos_weight = (len(y_train) - sum(y_train)) / sum(y_train)
-#
-#         if tune:
-#             # Define parameter grid for hyperparameter tuning
-#             param_grid = {
-#                 'max_depth': [3, 5, 7],
-#                 'learning_rate': [0.01, 0.1, 0.2],
-#                 'n_estimators': [100, 200, 300],
-#                 'scale_pos_weight': [1, scale_pos_weight],
-#                 'min_child_weight': [1, 5, 10],
-#                 'subsample': [0.8, 1],
-#                 'colsample_bytree': [0.8, 1]
-#             }
-#
-#             xgb_model = xgb.XGBClassifier(objective='binary:logistic', eval_metric='logloss')
-#             grid_search = GridSearchCV(estimator=xgb_model, param_grid=param_grid, scoring='f1', cv=3, verbose=1, n_jobs=-1)
-#             grid_search.fit(X_train, y_train)
-#
-#             # Use the best model from grid search
-#             model = grid_search.best_estimator_
-#             print("Best parameters found: ", grid_search.best_params_)
-#         else:
-#             # Train with default or manually set parameters
-#             model = xgb.XGBClassifier(
-#                 objective='binary:logistic',
-#                 eval_metric='logloss',
-#                 max_depth=5,
-#                 learning_rate=0.1,
-#                 n_estimators=200,
-#                 scale_pos_weight=scale_pos_weight,
-#                 min_child_weight=5,
-#                 subsample=0.8,
-#                 colsample_bytree=0.8
-#             )
-#             model.fit(X_train, y_train)
-#
-#         # Save the trained model
-#         joblib.dump(model, model_path)
-#         print("XGBoost model trained and saved to file!")
-#
-#     return model
-
-
-# def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", tune=True): # oded version RandomizedSearchCV
-#     if os.path.exists(model_path):
-#         model = joblib.load(model_path)
-#         print("XGBoost model loaded from file.")
-#     else:
-#         scale_pos_weight = (len(y_train) - sum(y_train)) / sum(y_train)
-#
-#         if tune:
-#             # Expanded parameter grid for improving ROC AUC
-#             param_grid = {
-#                 'max_depth': [3, 4, 5],
-#                 'learning_rate': [0.01, 0.05, 0.1],
-#                 'n_estimators': [200, 300],
-#                 'scale_pos_weight': [1, scale_pos_weight],
-#                 'min_child_weight': [1, 5, 10],
-#                 'gamma': [0, 0.1, 0.2],
-#                 'subsample': [0.7, 0.8, 0.9],
-#                 'colsample_bytree': [0.7, 0.8, 0.9]
-#             }
-#
-#             xgb_model = xgb.XGBClassifier(objective='binary:logistic', eval_metric='logloss')
-#             random_search = RandomizedSearchCV(
-#                 estimator=xgb_model,
-#                 param_distributions=param_grid,
-#                 scoring='roc_auc',  # Focus on maximizing ROC AUC
-#                 cv=3,
-#                 n_iter=10,
-#                 verbose=1,
-#                 n_jobs=-1
-#             )
-#             random_search.fit(X_train, y_train)
-#
-#             model = random_search.best_estimator_
-#             print("Best parameters found: ", random_search.best_params_)
-#         else:
-#             model = xgb.XGBClassifier(
-#                 objective='binary:logistic',
-#                 eval_metric='logloss',
-#                 max_depth=4,
-#                 learning_rate=0.05,
-#                 n_estimators=300,
-#                 scale_pos_weight=scale_pos_weight,
-#                 min_child_weight=5,
-#                 gamma=0.1,
-#                 subsample=0.8,
-#                 colsample_bytree=0.8
-#             )
-#             model.fit(X_train, y_train)
-#
-#         joblib.dump(model, model_path)
-#         print("XGBoost model trained and saved to file!")
-#
-#     return model
-
-# def train_xgboost(X_train, y_train, model_path="xgboost_model.joblib", tune=True): # changed in 10:41 14.11.24
-#     if os.path.exists(model_path):
-#         model = joblib.load(model_path)
-#         print("XGBoost model loaded from file.")
-#     else:
-#         scale_pos_weight = (len(y_train) - sum(y_train)) / sum(y_train)
-#
-#         if tune:
-#             def objective(trial):
-#                 # Define the parameter space for Bayesian Optimization
-#                 param = {
-#                     'objective': 'binary:logistic',
-#                     'eval_metric': 'logloss',
-#                     'max_depth': trial.suggest_int('max_depth', 3, 10),
-#                     'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.1, log=True),
-#                     'n_estimators': trial.suggest_int('n_estimators', 100, 500),
-#                     'scale_pos_weight': scale_pos_weight,
-#                     'min_child_weight': trial.suggest_int('min_child_weight', 1, 10),
-#                     'gamma': trial.suggest_float('gamma', 0.0001, 1.0, log=True),  # Fixed range for gamma
-#                     'subsample': trial.suggest_float('subsample', 0.6, 1.0),
-#                     'colsample_bytree': trial.suggest_float('colsample_bytree', 0.6, 1.0),
-#                 }
-#
-#                 # Use cross-validation to evaluate the model on training data only
-#                 model = xgb.XGBClassifier(**param)
-#                 cv_scores = cross_val_score(model, X_train, y_train, scoring='roc_auc', cv=3)
-#                 return cv_scores.mean()
-#
-#             # Optimize the objective function using Optuna
-#             study = optuna.create_study(direction="maximize")
-#             study.optimize(objective, n_trials=500)
-#
-#             # Get the best parameters found by Optuna
-#             best_params = study.best_params
-#             best_params['objective'] = 'binary:logistic'
-#             best_params['eval_metric'] = 'logloss'
-#             best_params['scale_pos_weight'] = scale_pos_weight
-#
-#             print("Best parameters found by Bayesian Optimization: ", best_params)
-#
-#             # Train the model with the best parameters on the entire training set
-#             model = xgb.XGBClassifier(**best_params)
-#             model.fit(X_train, y_train)
-#         else:
-#             # Train with default parameters if tuning is disabled
-#             model = xgb.XGBClassifier(
-#                 objective='binary:logistic',
-#                 eval_metric='logloss',
-#                 max_depth=4,
-#                 learning_rate=0.05,
-#                 n_estimators=300,
-#                 scale_pos_weight=scale_pos_weight,
-#                 min_child_weight=5,
-#                 gamma=0.1,
-#                 subsample=0.8,
-#                 colsample_bytree=0.8
-#             )
-#             model.fit(X_train, y_train)
-#
-#         # Save the trained model
-#         joblib.dump(model, model_path)
-#         print("XGBoost model trained and saved to file!")
-#
-#     return model
 
 def feature_elimination_by_importance(X_train, y_train, X_val, y_val):
     """

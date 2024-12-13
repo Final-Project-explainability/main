@@ -1,7 +1,7 @@
 {
     "XGBClassifier": {
-        "latest_model": "models/XGBClassifier/XGBClassifier_97cebbe8eb23849512814dedbfc86ac6e9a09c5be23229a1d0da438a444bba4f.joblib",
-        "latest_shap": "models/XGBClassifier/XGBClassifier_97cebbe8eb23849512814dedbfc86ac6e9a09c5be23229a1d0da438a444bba4f_shap.pkl"
+        "latest_model": "models/XGBClassifier_919797bb649c23e82f032d876cd8dfc42c1f7270dce7e9f8bd0828a156bb92ae.joblib",
+        "latest_shap": "models/XGBClassifier_919797bb649c23e82f032d876cd8dfc42c1f7270dce7e9f8bd0828a156bb92ae_shap.pkl"
     },
     "LGBMClassifier": {
         "latest_model": "models/LGBMClassifier/LGBMClassifier_18a8d23944dee99382d4e0d8d308e74eb6986ddf6897bea383f501c75b9a8eb4.joblib",

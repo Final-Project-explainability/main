@@ -65,22 +65,26 @@ def balance_data(X_train, y_train, method="smote"):
         X_resampled, y_resampled: The balanced dataset.
     """
     if method == "smote":
+        print("Applying SMOTE for oversampling...")
         smote = SMOTE(random_state=42)
         X_resampled, y_resampled = smote.fit_resample(X_train, y_train)
     elif method == "undersample":
+        print("Applying Random Undersampling...")
         rus = RandomUnderSampler(random_state=42)
         X_resampled, y_resampled = rus.fit_resample(X_train, y_train)
     elif method is None:
+        print("Skipping balancing...")
         X_resampled, y_resampled = X_train, y_train
     else:
-        raise ValueError("Method should be either 'smote' or 'undersample'.")
+        raise ValueError("Method should be either 'smote', 'undersample', or None.")
 
     return X_resampled, y_resampled
 
 
+
 def feature_engineering(data):
     # Drop columns that are likely outputs of prediction models (e.g., probabilistic predictions)
-    data = data.drop(columns=['apache_4a_hospital_death_prob', 'apache_4a_icu_death_prob'], errors='ignore')
+    data = data.drop(columns=['apache_4a_hospital_death_prob', 'apache_4a_icu_death_prob'], errors='ignore') #xgboost
 
     # # Drop columns that represent complex calculations or derived scores (e.g., APACHE diagnoses)
     # data = data.drop(columns=['apache_2_diagnosis', 'apache_3j_diagnosis', 'apache_post_operative',
@@ -90,9 +94,9 @@ def feature_engineering(data):
     # data = data.drop(columns=[col for col in data.columns if 'apache' in col], errors='ignore')
 
     # Drop columns that are purely identifiers or irrelevant to modeling (e.g., patient or hospital IDs)
-    data = data.drop(columns=['patient_id', 'encounter_id'], errors='ignore')
+    data = data.drop(columns=['patient_id', 'encounter_id'], errors='ignore') #xgboost
 
-    # # 1. Aggregated Features (Range of Vital Signs)
+    # # 1. Aggregated Features (Range of Vital Signs) # one tree
     # data['d1_diasbp_range'] = data['d1_diasbp_max'] - data['d1_diasbp_min']
     # data['d1_heartrate_range'] = data['d1_heartrate_max'] - data['d1_heartrate_min']
     # data['d1_mbp_range'] = data['d1_mbp_max'] - data['d1_mbp_min']
@@ -100,9 +104,9 @@ def feature_engineering(data):
     # data['d1_spo2_range'] = data['d1_spo2_max'] - data['d1_spo2_min']
     # data['d1_sysbp_range'] = data['d1_sysbp_max'] - data['d1_sysbp_min']
     # data['d1_temp_range'] = data['d1_temp_max'] - data['d1_temp_min']
-
+    #
     # # 2. Relative Ratios
-    # data['bilirubin_to_creatinine'] = data['d1_bilirubin_max'] / (data['d1_creatinine_max'] + 0.1)
+    # data['bilirubin_to_creatinine'] = data['d1_bilirubin_max'] / (data['d1_creatinine_max'] + 0.1) # one tree
     # data['bun_to_creatinine'] = data['d1_bun_max'] / (data['d1_creatinine_max'] + 0.1)
     # data['pao2_fio2_ratio'] = data['pao2_apache'] / (data['fio2_apache'] + 0.1)
 
@@ -128,21 +132,21 @@ def feature_engineering(data):
     # data = pd.get_dummies(data, columns=['ethnicity', 'icu_type', 'apache_3j_bodysystem', 'apache_2_bodysystem',
     #                                      'pre_icu_los_days_bin'], drop_first=True)
 
-    # # 3. Sepsis Triad
+    # # 8. Sepsis Triad
     # data['sepsis_triad_flag'] = (
     #         (data['d1_heartrate_max'] > 100) &  # Tachycardia
     #         (data['d1_temp_max'] > 38) &  # Fever
     #         (data['d1_resprate_max'] > 20)  # Increased respiratory rate
     # ).astype(int)
-
-    # 4. Renal Function Triad
+    #
+    # 9. Renal Function Triad #xgboost
     data['renal_function_triad_flag'] = (
             (data['d1_creatinine_max'] > 1.5) &  # Elevated creatinine
             (data['urineoutput_apache'] < 500) &  # Low urine output
             (data['d1_bun_max'] > 30)  # Elevated BUN
     ).astype(int)
 
-    # 5. Multi-Organ Dysfunction Syndrome (MODS) Pentad
+    # 10. Multi-Organ Dysfunction Syndrome (MODS) Pentad #xgboost # one tree
     data['mods_pentad_flag'] = (
             (data['d1_creatinine_max'] > 1.5) &  # Renal dysfunction
             (data['d1_bilirubin_max'] > 2) &  # Hepatic dysfunction
@@ -152,6 +156,32 @@ def feature_engineering(data):
     ).astype(int)
 
     return data
+
+# def feature_engineering(data):
+#     # Drop columns unrelated to mortality prediction
+#     data = data.drop(columns=['apache_4a_hospital_death_prob', 'apache_4a_icu_death_prob', 'patient_id', 'encounter_id'], errors='ignore')
+#
+#     # Aggregated Features
+#     data['d1_diasbp_range'] = data['d1_diasbp_max'] - data['d1_diasbp_min']
+#     data['d1_heartrate_range'] = data['d1_heartrate_max'] - data['d1_heartrate_min']
+#     data['d1_mbp_range'] = data['d1_mbp_max'] - data['d1_mbp_min']
+#
+#     # Relative Ratios
+#     data['bun_to_creatinine'] = data['d1_bun_max'] / (data['d1_creatinine_max'] + 0.1)
+#     data['bilirubin_to_albumin'] = data['d1_bilirubin_max'] / (data['d1_albumin_min'] + 0.1)
+#
+#     # Flags for critical conditions
+#     data['renal_function_triad'] = (
+#         (data['d1_creatinine_max'] > 1.5) & (data['urineoutput_apache'] < 500) & (data['d1_bun_max'] > 30)
+#     ).astype(int)
+#
+#     data['mods_pentad_flag'] = (
+#         (data['d1_creatinine_max'] > 1.5) & (data['d1_bilirubin_max'] > 2) &
+#         (data['d1_sysbp_min'] < 90) & (data['d1_spo2_min'] < 90) & (data['d1_platelets_min'] < 150)
+#     ).astype(int)
+#
+#     return data
+
 
 
 def clean_data(data):

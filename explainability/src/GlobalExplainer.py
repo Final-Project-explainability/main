@@ -1,4 +1,6 @@
 import shap
+from sklearn.linear_model import LogisticRegressionCV
+
 from main import *
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -180,7 +182,54 @@ def explain_model_with_shap(model, X_train):
 def explain_model(model, X_train, X_test, y_train):
     if isinstance(model, LogisticRegression):
         explain_logistic_regression_with_coefficients(model, X_train)
+    elif isinstance(model, DecisionTreeClassifier):
+        feature_names = X_train.columns
+        explain_decision_tree_with_importances(model, feature_names)
     else:
         explain_model_with_shap(model, X_train)
         explain_model_with_lime(model, X_train, X_test)
         train_and_visualize_fbt(xgb_model=model, X_train=X_train, y_train=y_train)
+
+
+def explain_decision_tree_with_importances(model, feature_names):
+    """
+    Display and plot the feature importances from a trained Decision Tree model.
+    Args:
+        model: Trained Decision Tree model.
+        feature_names: List of feature names (or columns of the DataFrame).
+    """
+    if not hasattr(model, "feature_importances_"):
+        print("The model does not have feature importances.")
+        return
+
+    # Extract feature importances
+    importances = model.feature_importances_
+
+    # Combine feature names and their importances into a DataFrame
+    feature_importances = pd.DataFrame({
+        "Feature": feature_names,
+        "Importance": importances
+    })
+
+    # Sort features by importance in descending order
+    feature_importances = feature_importances.sort_values(by="Importance", ascending=False)
+
+    # Select the top 20 features
+    top_20_features = feature_importances.head(20)
+
+    # Plot the feature importances as a horizontal bar chart
+    plt.figure(figsize=(8, 9.5))  # Adjust this ratio as needed
+
+    # Create horizontal bar plot with reversed order so the most important feature is at the top
+    plt.barh(top_20_features['Feature'][::-1], top_20_features['Importance'][::-1], color='skyblue')
+
+    plt.xlabel('Importance')
+    plt.title('Top 20 Feature Importances')
+
+    # Ensure labels are horizontal for better readability
+    plt.yticks(rotation=0)
+    plt.tight_layout()  # Ensures the labels and titles fit in the plot
+
+    plt.show()
+
+    return top_20_features
