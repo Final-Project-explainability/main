@@ -9,7 +9,15 @@ class ModelManager:
 
     @staticmethod
     def _load_config():
-        """Load the configuration file."""
+        """
+        Load the configuration file from the predefined path.
+
+        The configuration file contains metadata such as model paths.
+        If the file does not exist, an empty dictionary is returned.
+
+        Returns:
+            dict: The configuration data loaded from the file, or an empty dictionary if the file does not exist.
+        """
         if os.path.exists(ModelManager.CONFIG_PATH):
             with open(ModelManager.CONFIG_PATH, 'r') as f:
                 return json.load(f)
@@ -17,21 +25,29 @@ class ModelManager:
 
     @staticmethod
     def _save_config(config):
-        """Save the configuration to file."""
+        """
+        Save the given configuration dictionary to the configuration file.
+
+        Parameters:
+            config (dict): The configuration data to be saved.
+        """
         with open(ModelManager.CONFIG_PATH, 'w') as f:
             json.dump(config, f, indent=4)
 
     @staticmethod
     def _hash_model(model):
         """
-        Calculate a hash for the model, ensuring the hash is unique
-        for models trained on different features or having different parameters.
+        Generate a unique hash for the given model. The hash is based on the model's parameters
+        and the number of input features (if available).
+
+        This hash can be used to distinguish between different models, including those trained
+        on different data or with different parameters.
 
         Parameters:
-            model: The machine learning model.
+            model: The machine learning model to generate a hash for.
 
         Returns:
-            A hash string representing the model.
+            str: The hash string representing the model.
         """
         # Get model parameters as string
         model_params = str(model.get_params()) if hasattr(model, 'get_params') else str(model)
@@ -44,6 +60,15 @@ class ModelManager:
 
     @staticmethod
     def get_path(model):
+        """
+        Determine the path where the model should be saved, based on the model's type and a unique hash.
+
+        Parameters:
+            model: The machine learning model to determine the save path for.
+
+        Returns:
+            str: The path where the model should be saved.
+        """
         model_hash = ModelManager._hash_model(model)
 
         # Determine paths for saving
@@ -54,7 +79,15 @@ class ModelManager:
 
     @staticmethod
     def save_model(model):
+        """
+        Save the given model to disk using joblib.
 
+        The model is saved at a path determined by its type and a unique hash.
+        The configuration file is updated with the model's path for later retrieval.
+
+        Parameters:
+            model: The machine learning model to be saved.
+        """
         path = ModelManager.get_path(model)
         model_path = path + ".joblib"
 
@@ -71,8 +104,16 @@ class ModelManager:
 
     @staticmethod
     def save_shap(model, shap_values):
-        """Save the model and its SHAP values."""
+        """
+        Save the SHAP (Shapley values) associated with the given model.
 
+        The SHAP values are saved at a path derived from the model's type and a unique hash.
+        The configuration file is updated to store the SHAP file path.
+
+        Parameters:
+            model: The machine learning model for which SHAP values are being saved.
+            shap_values: The SHAP values to be saved, typically a numpy array or DataFrame.
+        """
         path = ModelManager.get_path(model)
         shap_path = path + "_shap.pkl"
 
@@ -90,7 +131,20 @@ class ModelManager:
 
     @staticmethod
     def load_model(model_type):
-        """Load the latest saved model of the given type."""
+        """
+        Load the latest saved model of the specified type from the configuration.
+
+        The model is loaded based on the path stored in the configuration file.
+
+        Parameters:
+            model_type (str): The type of the model to be loaded (e.g., 'XGBoost').
+
+        Returns:
+            model: The machine learning model loaded from disk.
+
+        Raises:
+            ValueError: If the model type is not found in the configuration.
+        """
         config = ModelManager._load_config()
         if model_type in config:
             model_path = config[model_type]["latest_model"]
@@ -100,18 +154,42 @@ class ModelManager:
 
     @staticmethod
     def load_shap(model):
-        """Load SHAP values for a given model."""
+        """
+        Load the SHAP values associated with the given model from disk.
+
+        Parameters:
+            model: The machine learning model for which SHAP values need to be loaded.
+
+        Returns:
+            shap_values: The SHAP values loaded from disk.
+        """
         shap_path = ModelManager.get_path(model) + "_shap.pkl"
         with open(shap_path, 'rb') as f:
             return joblib.load(f)
 
     @staticmethod
     def save_fbt(model, fbt):
+        """
+        Save the FBT (Feature-Based Trees) model associated with the given model.
+
+        Parameters:
+            model: The machine learning model for which the FBT is being saved.
+            fbt: The FBT model, typically generated by some specific method.
+        """
         fbt_path = ModelManager.get_path(model) + "_fbt.joblib"
         joblib.dump(fbt, fbt_path)
         print("FBT model saved as 'fbt_model.joblib'.")
 
     @staticmethod
     def load_fbt(model):
+        """
+        Load the FBT model associated with the given model from disk.
+
+        Parameters:
+            model: The machine learning model for which the FBT is being loaded.
+
+        Returns:
+            fbt: The FBT model loaded from disk.
+        """
         fbt_path = ModelManager.get_path(model) + "_fbt.joblib"
         return joblib.load(fbt_path)
