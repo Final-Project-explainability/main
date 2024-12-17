@@ -217,6 +217,9 @@ def manage_models(X_train, y_train, X_test, y_test, model_choice):
     # Evaluate the model
     evaluate_model(model, X_test, y_test)
 
+    if not load_model:
+        ModelManager.save_model(model)
+
     # Display feature importances if the model supports it
     # if model_info['support_importances'] and hasattr(model, "feature_importances_"):
     #     feature_names = X_train.columns  # Get feature names

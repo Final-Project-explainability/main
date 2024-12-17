@@ -54,7 +54,6 @@ class ModelManager:
 
     @staticmethod
     def save_model(model):
-        """Save the model and its SHAP values."""
 
         path = ModelManager.get_path(model)
         model_path = path + ".joblib"
@@ -71,15 +70,12 @@ class ModelManager:
         print(f"Model saved for {model_type}. Paths updated in config.")
 
     @staticmethod
-    def save_model_and_shap(model, shap_values):
+    def save_shap(model, shap_values):
         """Save the model and its SHAP values."""
 
         path = ModelManager.get_path(model)
-        model_path = path + ".joblib"
         shap_path = path + "_shap.pkl"
 
-        # Save model and SHAP values
-        joblib.dump(model, model_path)
         with open(shap_path, 'wb') as f:
             joblib.dump(shap_values, f)
 
@@ -87,11 +83,10 @@ class ModelManager:
         config = ModelManager._load_config()
         model_type = type(model).__name__
         config[model_type] = {
-            "latest_model": model_path,
             "latest_shap": shap_path,
         }
         ModelManager._save_config(config)
-        print(f"Model and SHAP values saved for {model_type}. Paths updated in config.")
+        print(f"SHAP values saved for {model_type}. Paths updated in config.")
 
     @staticmethod
     def load_model(model_type):

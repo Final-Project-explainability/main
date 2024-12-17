@@ -172,7 +172,7 @@ def explain_model_with_shap(model, X_train):
         print("Using TreeExplainer for tree-based model.")
         shap_values = explainer.shap_values(X_train)
         # Save the SHAP values and the model type
-        ModelManager.save_model_and_shap(model, shap_values)
+        ModelManager.save_shap(model, shap_values)
 
     shap.summary_plot(shap_values, X_train)
 
