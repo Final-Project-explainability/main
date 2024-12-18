@@ -9,5 +9,8 @@
     },
     "LogisticRegression": {
         "latest_model": "models/LogisticRegression/LogisticRegression_4b00798b43cc7039a51dc31ca228949b5f109eb9d77305ccca9c9f769a064df2.joblib"
+    },
+    "DecisionTreeClassifier": {
+        "latest_model": "models/DecisionTreeClassifier/DecisionTreeClassifier_d23714a65d24720132d8d6b29fb8ef8d6e8e398d31418519bc4e0f8f5d52a6c9.joblib"
     }
 }
