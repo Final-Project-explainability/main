@@ -1,10 +1,13 @@
 {
     "XGBClassifier": {
-        "latest_model": "models/XGBClassifier_919797bb649c23e82f032d876cd8dfc42c1f7270dce7e9f8bd0828a156bb92ae.joblib",
-        "latest_shap": "models/XGBClassifier_919797bb649c23e82f032d876cd8dfc42c1f7270dce7e9f8bd0828a156bb92ae_shap.pkl"
+        "latest_model": "models/XGBClassifier/XGBClassifier_68d5eb69ffa8bd8943627a6911669e2f3ef4a7ac796d2904c0749c6702c6a443.joblib",
+        "latest_shap": "models/XGBClassifier/XGBClassifier_68d5eb69ffa8bd8943627a6911669e2f3ef4a7ac796d2904c0749c6702c6a443_shap.pkl"
     },
     "LGBMClassifier": {
         "latest_model": "models/LGBMClassifier/LGBMClassifier_18a8d23944dee99382d4e0d8d308e74eb6986ddf6897bea383f501c75b9a8eb4.joblib",
         "latest_shap": "models/LGBMClassifier/LGBMClassifier_18a8d23944dee99382d4e0d8d308e74eb6986ddf6897bea383f501c75b9a8eb4_shap.pkl"
+    },
+    "LogisticRegression": {
+        "latest_model": "models/LogisticRegression/LogisticRegression_4b00798b43cc7039a51dc31ca228949b5f109eb9d77305ccca9c9f769a064df2.joblib"
     }
 }

@@ -229,10 +229,11 @@ def manage_models(X_train, y_train, X_test, y_test, model_choice):
     # # Perform global explanations (e.g., SHAP) if the model supports explainability
     # if model_info['support_explainability']:
     print("\nPerforming global explanations...")
-    GlobalExplainer.explain_model(model, X_train, X_test, y_train)
+    GlobalExplainer.explain_model(model, X_train, y_train)
 
-        # print("\nPerforming local explanations using LIME...")
-        # LocalExplainer.analyze_individual_risk(model, X_test, y_test)
+    # print("\nPerforming local explanations using LIME...")
+
+    LocalExplainer.analyze_individual_risk(model, X_test, y_test, X_train)
 
 
 def main():
