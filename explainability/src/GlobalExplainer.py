@@ -64,50 +64,50 @@ def train_and_visualize_fbt(X_train, y_train, xgb_model, max_depth=5, min_forest
     return fbt
 
 
-# def explain_model_with_lime(model, X_train, X_test):
-#     # Initialize LIME explainer
-#     explainer = lime_tabular.LimeTabularExplainer(
-#         X_train.values,
-#         feature_names=X_train.columns,
-#         class_names=['Non-death', 'Death'],
-#         discretize_continuous=True
-#     )
-#
-#     # Create explanation for the first test instance
-#     explanation = explainer.explain_instance(X_test.iloc[0].values, model.predict_proba)
-#
-#     # Convert the explanation to a DataFrame for easier manipulation
-#     exp_df = explanation.as_list()
-#     exp_df = pd.DataFrame(exp_df, columns=["Feature", "Contribution"])
-#
-#     # Sort the explanation by absolute contribution and get the top features
-#     exp_df['Absolute Contribution'] = exp_df['Contribution'].abs()
-#     exp_df = exp_df.sort_values(by='Absolute Contribution', ascending=False)
-#
-#     # Select top 20 features, but handle the case if there are less than 20
-#     top_n = min(20, len(exp_df))
-#     top_20_exp_df = exp_df.head(top_n)
-#
-#     # Display the top features
-#     print(f"Top {top_n} important features for this instance:")
-#     print(top_20_exp_df)
-#
-#     # Plot the top features
-#     plt.figure(figsize=(10, 8))  # Adjust the figure size as needed
-#     plt.barh(top_20_exp_df['Feature'], top_20_exp_df['Contribution'], color='skyblue')
-#     plt.xlabel('Contribution to Prediction')
-#     plt.title(f'Top {top_n} Important Features (LIME Explanation)')
-#     plt.gca().invert_yaxis()  # Invert Y-axis to have the most important feature on top
-#     plt.tight_layout()  # Adjust layout to make sure everything fits
-#     plt.show()
-#
-#     # Save the explanation to an HTML file (optional)
-#     html = explanation.as_html()
-#     with open("lime_explanation_top_20.html", "w", encoding='utf-8') as f:
-#         f.write(html)
-#
-#     # Return the top features DataFrame
-#     return top_20_exp_df
+def explain_model_with_lime(model, X_train, X_test):
+    # Initialize LIME explainer
+    explainer = lime_tabular.LimeTabularExplainer(
+        X_train.values,
+        feature_names=X_train.columns,
+        class_names=['Non-death', 'Death'],
+        discretize_continuous=True
+    )
+
+    # Create explanation for the first test instance
+    explanation = explainer.explain_instance(X_test.iloc[0].values, model.predict_proba)
+
+    # Convert the explanation to a DataFrame for easier manipulation
+    exp_df = explanation.as_list()
+    exp_df = pd.DataFrame(exp_df, columns=["Feature", "Contribution"])
+
+    # Sort the explanation by absolute contribution and get the top features
+    exp_df['Absolute Contribution'] = exp_df['Contribution'].abs()
+    exp_df = exp_df.sort_values(by='Absolute Contribution', ascending=False)
+
+    # Select top 20 features, but handle the case if there are less than 20
+    top_n = min(20, len(exp_df))
+    top_20_exp_df = exp_df.head(top_n)
+
+    # Display the top features
+    print(f"Top {top_n} important features for this instance:")
+    print(top_20_exp_df)
+
+    # Plot the top features
+    plt.figure(figsize=(10, 8))  # Adjust the figure size as needed
+    plt.barh(top_20_exp_df['Feature'], top_20_exp_df['Contribution'], color='skyblue')
+    plt.xlabel('Contribution to Prediction')
+    plt.title(f'Top {top_n} Important Features (LIME Explanation)')
+    plt.gca().invert_yaxis()  # Invert Y-axis to have the most important feature on top
+    plt.tight_layout()  # Adjust layout to make sure everything fits
+    plt.show()
+
+    # Save the explanation to an HTML file (optional)
+    html = explanation.as_html()
+    with open("lime_explanation_top_20.html", "w", encoding='utf-8') as f:
+        f.write(html)
+
+    # Return the top features DataFrame
+    return top_20_exp_df
 
 
 def explain_logistic_regression_with_coefficients(model, X_train):
@@ -179,7 +179,7 @@ def explain_model_with_shap(model, X_train):
     return shap_values
 
 
-def explain_model(model, X_train, y_train):
+def explain_model(model, X_train, X_test, y_train):
     if isinstance(model, LogisticRegression):
         explain_logistic_regression_with_coefficients(model, X_train)
     elif isinstance(model, DecisionTreeClassifier):
@@ -187,8 +187,8 @@ def explain_model(model, X_train, y_train):
         explain_decision_tree_with_importances(model, feature_names)
     else:
         explain_model_with_shap(model, X_train)
-        # explain_model_with_lime(model, X_train, X_test)
-        # train_and_visualize_fbt(xgb_model=model, X_train=X_train, y_train=y_train)
+        explain_model_with_lime(model, X_train, X_test)
+        train_and_visualize_fbt(xgb_model=model, X_train=X_train, y_train=y_train)
 
 
 def explain_decision_tree_with_importances(model, feature_names):

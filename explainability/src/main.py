@@ -127,26 +127,36 @@ def manage_models(X_train, y_train, X_test, y_test, model_choice):
     model_mapping = {
         'GradientBoostingClassifier': {
             'train_func': train_gradient_boosting,
+            'support_importances': True,
+            'support_explainability': True,  # SHAP and LIME supported
             'normalize': False,  # No normalization required
             'balance_data': True  # Requires data balancing
         },
         'DecisionTreeClassifier': {
             'train_func': train_decision_tree,
+            'support_importances': True,
+            'support_explainability': False,  # SHAP and LIME not needed
             'normalize': True,  # Requires normalization
             'balance_data': True  # Requires data balancing
         },
         'XGBClassifier': {
             'train_func': train_xgboost,
+            'support_importances': True,
+            'support_explainability': True,  # SHAP and LIME supported
             'normalize': False,  # No normalization required
             'balance_data': False  # Handles imbalance internally
         },
         'LGBMClassifier': {
             'train_func': train_lightgbm,
+            'support_importances': True,
+            'support_explainability': True,  # SHAP and LIME supported
             'normalize': False,  # No normalization required
             'balance_data': False  # Handles imbalance internally
         },
         'LogisticRegression': {
             'train_func': train_logistic_regression,
+            'support_importances': False,
+            'support_explainability': True,  # SHAP and LIME not needed
             'normalize': True,  # Requires normalization
             'balance_data': False  # Requires data balancing
         }
@@ -218,13 +228,11 @@ def manage_models(X_train, y_train, X_test, y_test, model_choice):
 
     # # Perform global explanations (e.g., SHAP) if the model supports explainability
     # if model_info['support_explainability']:
-
     print("\nPerforming global explanations...")
-    GlobalExplainer.explain_model(model, X_train, y_train)
+    GlobalExplainer.explain_model(model, X_train, X_test, y_train)
 
-    # print("\nPerforming local explanations using LIME...")
-
-    LocalExplainer.analyze_individual_risk(model, X_test, y_test, X_train)
+        # print("\nPerforming local explanations using LIME...")
+        # LocalExplainer.analyze_individual_risk(model, X_test, y_test)
 
 
 def main():
@@ -243,8 +251,12 @@ def main():
     data = feature_engineering(data)
     data = preprocess_data(data)
 
-    X = data.drop(columns=['hospital_death'])
-    y = data['hospital_death']
+    if 'hospital_death' in data.columns:
+        X = data.drop(columns=['hospital_death'])
+        y = data['hospital_death']
+    else:
+        print("Target column 'hospital_death' not found.")
+        return
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
