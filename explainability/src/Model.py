@@ -1,5 +1,3 @@
-import os
-import joblib
 import xgboost as xgb
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import GradientBoostingClassifier
@@ -7,17 +5,13 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test
 import numpy as np
 import lightgbm as lgb
 import optuna
-from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import cross_val_score
 import random
-import json
 from sklearn.tree import DecisionTreeClassifier
-import matplotlib.pyplot as plt
-import pandas as pd
 from sklearn.model_selection import GridSearchCV
-from explainability.src.FeatureFilteredXGB import FeatureFilteredXGB
 import json
 import os
+
 
 random.seed(42)
 np.random.seed(42)
@@ -87,62 +81,6 @@ def tune_decision_tree(X_train, y_train):
     return best_model
 
 
-# def train_decision_tree(X_train, y_train, max_depth=None, criterion="gini"):
-#     """
-#     Train a single Decision Tree classifier.
-#     Args:
-#         X_train: Training feature set.
-#         y_train: Training labels.
-#         max_depth: Maximum depth of the tree (default is None, meaning the tree will grow until all leaves are pure).
-#         criterion: Splitting criterion ("gini" for Gini Impurity or "entropy" for Information Gain).
-#     Returns:
-#         model: Trained Decision Tree model.
-#     """
-#     print("Training a single Decision Tree...")
-#     # Initialize and train the Decision Tree
-#     model = DecisionTreeClassifier(max_depth=max_depth, criterion=criterion, random_state=42)
-#     model.fit(X_train, y_train)
-#     print("Decision Tree training completed.")
-#     return model
-
-from sklearn.model_selection import GridSearchCV
-from sklearn.tree import DecisionTreeClassifier
-
-# def train_decision_tree(X_train, y_train, max_depth=None, criterion="gini"):
-#     """
-#     Train a single Decision Tree classifier with hyperparameter tuning.
-#     Args:
-#         X_train: Training feature set.
-#         y_train: Training labels.
-#         max_depth: Maximum depth of the tree (default is None, meaning the tree will grow until all leaves are pure).
-#         criterion: Splitting criterion ("gini" for Gini Impurity or "entropy" for Information Gain).
-#     Returns:
-#         model: Trained Decision Tree model.
-#     """
-#     print("Training a single Decision Tree with hyperparameter tuning...")
-#
-#     # Define hyperparameter grid
-#     param_grid = {
-#         'max_depth': [3, 5, 10, None], #5
-#         'min_samples_split': [2, 5, 10], #2
-#         'min_samples_leaf': [1, 2, 4], #1
-#         'criterion': ['gini', 'entropy']  #entropy
-#     }
-#
-#     # Perform grid search
-#     grid_search = GridSearchCV(
-#         DecisionTreeClassifier(random_state=42),
-#         param_grid,
-#         scoring='roc_auc',
-#         cv=5,
-#         n_jobs=-1
-#     )
-#     grid_search.fit(X_train, y_train)
-#
-#     # Get the best model
-#     best_model = grid_search.best_estimator_
-#     print(f"Best Parameters: {grid_search.best_params_}")
-#     return best_model
 def train_decision_tree(X_train, y_train, params_path="jsons/decision_tree_params.json"):
     """
     Train a single Decision Tree classifier with hyperparameter tuning and save the best parameters.
@@ -196,35 +134,7 @@ def train_decision_tree(X_train, y_train, params_path="jsons/decision_tree_param
     return model
 
 
-# def plot_feature_importances(model, feature_names):
-#     """
-#     Plot feature importances from a trained Decision Tree model.
-#     Args:
-#         model: Trained Decision Tree model.
-#         feature_names: List of feature names.
-#     """
-#     if not hasattr(model, "feature_importances_"):
-#         print("The model does not have feature importances.")
-#         return
-#
-#     # Extract feature importances and sort them in descending order
-#     importances = model.feature_importances_
-#     indices = np.argsort(importances)[::-1]  # Indices of features sorted by importance
-#
-#     # Plot the feature importances as a bar chart
-#     plt.figure(figsize=(10, 6))
-#     plt.title("Feature Importances")
-#     plt.bar(range(len(importances)), importances[indices], align="center")
-#     plt.xticks(range(len(importances)), [feature_names[i] for i in indices], rotation=90)
-#     plt.xlabel("Feature")
-#     plt.ylabel("Importance")
-#     plt.tight_layout()
-#     plt.show()
-
-
 #######################################################################################################################
-
-# TODO: delete gradient?? think about it.
 def train_gradient_boosting(X_train, y_train):
     print("train gradient boosting")
     model = GradientBoostingClassifier()
@@ -232,67 +142,15 @@ def train_gradient_boosting(X_train, y_train):
     return model
 
 
-def feature_elimination_by_importance(X_train, y_train, X_val, y_val):
-    """
-    Perform recursive feature elimination based on feature importance.
-    Args:
-        X_train: Training feature set.
-        y_train: Training labels.
-        X_val: Validation feature set.
-        y_val: Validation labels.
-    Returns:
-        List of best features.
-    """
-    features = X_train.columns.tolist()
-    best_score = 0
-    best_features = features.copy()
-
-    while len(features) > 1:
-        print(f"Testing with {len(features)} features...")
-
-        # Train XGBoost model with current features
-        model = xgb.XGBClassifier(
-            objective='binary:logistic',
-            eval_metric='logloss',
-            use_label_encoder=False
-        )
-        model.fit(X_train[features], y_train)
-
-        # Calculate ROC AUC on validation set
-        y_pred = model.predict_proba(X_val[features])[:, 1]
-        score = roc_auc_score(y_val, y_pred)
-        print(f"Current ROC AUC: {score:.4f}")
-
-        # Save best score and features
-        if score > best_score:
-            best_score = score
-            best_features = features.copy()
-
-        # Get feature importances and remove the least important feature
-        importance = model.feature_importances_
-        least_important = features[np.argmin(importance)]
-        print(f"Removing least important feature: {least_important}")
-        features.remove(least_important)
-
-    print(f"Best ROC AUC: {best_score:.4f}")
-    print(f"Best features: {best_features}")
-    return best_features
-
-
-def train_xgboost(X_train, y_train, params_path="jsons/best_params.json", fine_tune=False, long_run=False):
+def train_xgboost(X_train, y_train, params_path="jsons/best_params.json", fine_tune=False, tune  =False):
     """
     Train an XGBoost model with optional hyperparameter tuning, feature selection, and long-run optimization.
     Args:
         X_train: Training feature set.
         y_train: Training labels.
-        model_path: Path to save the trained model.
         params_path: Path to save or load best parameters.
-        features_path: Path to save or load selected features.
-        tune: Whether to perform hyperparameter tuning.
-        with_feature_filtered: Whether to perform feature elimination by importance.
         fine_tune: Whether to fine-tune the model on the validation set.
-        long_run: Whether to perform long-running optimization using Optuna.
-        trials: Number of trials for long-run optimization.
+        tune: Whether to perform long-running optimization using Optuna.
     Returns:
         Trained XGBoost model.
     """
@@ -302,7 +160,7 @@ def train_xgboost(X_train, y_train, params_path="jsons/best_params.json", fine_t
     # Split training data into training and validation sets
     X_train_split, X_val, y_train_split, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
 
-    if long_run:
+    if tune:
         print("Starting long-run optimization with Optuna...")
 
         def long_run_objective(trial):
@@ -414,30 +272,30 @@ def train_lightgbm(X_train, y_train):
     return model
 
 
-def tune_model(X_train, y_train):
-    param_grid = {
-        'n_estimators': [100, 200],
-        'learning_rate': [0.01, 0.1],
-        'max_depth': [3, 5],
-        'subsample': [0.8, 1.0]
-    }
-    model = GradientBoostingClassifier()
-    grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=3, scoring='recall')
-    grid_search.fit(X_train, y_train)
-    print(f"Best parameters found: {grid_search.best_params_}")
-    return grid_search.best_estimator_
-
-
-def tune_model_random(X_train, y_train):
-    param_dist = {
-        'n_estimators': np.arange(100, 301, 100),
-        'learning_rate': [0.01, 0.05, 0.1],
-        'max_depth': [3, 4, 5],
-        'subsample': [0.8, 1.0]
-    }
-    model = GradientBoostingClassifier()
-    random_search = RandomizedSearchCV(estimator=model, param_distributions=param_dist, n_iter=3, cv=3,
-                                       scoring='recall', random_state=42)
-    random_search.fit(X_train, y_train)
-    print(f"Best parameters found: {random_search.best_params_}")
-    return random_search.best_estimator_
+# def tune_model(X_train, y_train):
+#     param_grid = {
+#         'n_estimators': [100, 200],
+#         'learning_rate': [0.01, 0.1],
+#         'max_depth': [3, 5],
+#         'subsample': [0.8, 1.0]
+#     }
+#     model = GradientBoostingClassifier()
+#     grid_search = GridSearchCV(estimator=model, param_grid=param_grid, cv=3, scoring='recall')
+#     grid_search.fit(X_train, y_train)
+#     print(f"Best parameters found: {grid_search.best_params_}")
+#     return grid_search.best_estimator_
+#
+#
+# def tune_model_random(X_train, y_train):
+#     param_dist = {
+#         'n_estimators': np.arange(100, 301, 100),
+#         'learning_rate': [0.01, 0.05, 0.1],
+#         'max_depth': [3, 4, 5],
+#         'subsample': [0.8, 1.0]
+#     }
+#     model = GradientBoostingClassifier()
+#     random_search = RandomizedSearchCV(estimator=model, param_distributions=param_dist, n_iter=3, cv=3,
+#                                        scoring='recall', random_state=42)
+#     random_search.fit(X_train, y_train)
+#     print(f"Best parameters found: {random_search.best_params_}")
+#     return random_search.best_estimator_
