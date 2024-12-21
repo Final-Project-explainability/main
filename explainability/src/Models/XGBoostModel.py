@@ -107,10 +107,21 @@ class XGBoostModel(Model):
         return model
 
     def local_explain(self, X_train, X_instance, predicted_probability):
-        self.explain_with_shap(X_instance, predicted_probability)
+        self.local_explain_with_shap(X_instance, predicted_probability)
         self.explain_with_lime(X_train, X_instance)
 
     def global_explain(self, X_train):
+        self.global_explain_with_shap(X_train=X_train)
+
+
+    def explain_with_fbt(self):
+        try:
+            fbt = ModelManager.load_fbt(self)
+        except Exception as e:
+            print(e)
+            
+
+    def global_explain_with_shap(self, X_train):
         """
             Explain the model with SHAP values, using pre-saved values if available.
             If SHAP values are not found, compute them and save both model and SHAP.
@@ -135,7 +146,7 @@ class XGBoostModel(Model):
 
         return shap_values
 
-    def explain_with_shap(self, X_instance, predicted_probability):
+    def local_explain_with_shap(self, X_instance, predicted_probability):
         """
         Explains a prediction using SHAP for complex models like XGBoost, LightGBM, and Random Forest.
         Displays the 10 most important features and the sum of the remaining features in descending order of importance.
