@@ -1,55 +1,45 @@
 import React, { useState } from 'react';
-import './styles.css'; // Import the CSS file
 
+// Login component to handle user login
 const Login = ({ onLogin }) => {
-    // State for managing username and password inputs
+    // State to manage username and password inputs
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
     // Handle form submission
     const handleSubmit = (e) => {
-        e.preventDefault(); // Prevent default form behavior
+        e.preventDefault(); // Prevent default form submission behavior
         if (username && password) {
-            onLogin(username); // Trigger login callback
+            onLogin(username); // Trigger the login function with the username
         } else {
-            alert('Please fill in both fields'); // Alert if fields are empty
+            alert('Please fill in both fields'); // Alert user if fields are empty
         }
     };
 
     return (
-        <div className="login-container">
-            <div className="login-box">
-                <h1 className="login-title">ICU MediClear</h1>
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Username:</label>
-                        <input
-                            type="text"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            placeholder="Enter your username"
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label>Password:</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Enter your password"
-                        />
-                    </div>
-                    <button type="submit" className="login-button">
-                        Login
-                    </button>
-                </form>
-                <div className="extra-links">
-                    <a href="#" className="forgot-password">Forgot password?</a>
-                    <a href="#" className="register-link">Register</a>
+        <div>
+            <h1>ICU MediClear</h1>
+            <form onSubmit={handleSubmit}>
+                <div>
+                    <label>Username:</label>
+                    <input
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)} // Update username state
+                    />
                 </div>
-            </div>
+                <div>
+                    <label>Password:</label>
+                    <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)} // Update password state
+                    />
+                </div>
+                <button type="submit">Login</button>
+            </form>
         </div>
     );
 };
 
-export default Login;
+export default Login; // Export the Login component
