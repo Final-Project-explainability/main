@@ -1,3 +1,4 @@
+
 import datetime
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -17,6 +18,7 @@ class Model(ABC):
     def __init__(self):
         self.model = None
         self.name = None
+
 
     @abstractmethod
     def train(self, X_train, y_train):
@@ -40,7 +42,7 @@ class Model(ABC):
     def get_type(self):
         return type(self.model).__name__
 
-    def predict_proba(self,individual_data):
+    def predict_proba(self, individual_data):
         return self.model.predict_proba(individual_data)
 
     def evaluate_model(self, X_test, y_test, optimal_threshold=0.5):
@@ -100,7 +102,6 @@ class Model(ABC):
         Calculate recall for the top X% of predicted probabilities.
 
         Args:
-            model: The trained model.
             X_test: Test features.
             y_test: True labels for the test set.
             percentage: The top percentage of samples to calculate recall (e.g., 2 or 5).

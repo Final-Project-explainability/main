@@ -9,7 +9,6 @@ from explainability.src.Models.Model import Model
 class LogisticRegressionModel(Model):
     def __init__(self):
         super().__init__()
-        self.model = LogisticRegression(class_weight='balanced', max_iter=1000)
 
     def train(self, X_train, y_train):
         model = LogisticRegression(class_weight='balanced', max_iter=1000)
