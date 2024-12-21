@@ -1,10 +1,16 @@
+import os
+import joblib
+import xgboost as xgb
+import lightgbm as lgb  # Import LightGBM
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
 from data_loader import load_data
+import GlobalExplainer
 import LocalExplainer
 from explainability.src.ModelManager import ModelManager
-from explainability.src.Models.DecisionTreeModel import DecisionTreeModel
-from explainability.src.Models.LogisticRegressionModel import LogisticRegressionModel
-from explainability.src.Models.XGBoostModel import XGBoostModel
 from preprocessing import preprocess_data, balance_data, feature_engineering, normalize_data
+from Model import *
+from evaluate import evaluate_model
 from sklearn.model_selection import train_test_split
 
 
@@ -93,18 +99,17 @@ from sklearn.model_selection import train_test_split
 ######  new version
 
 # General function to train or load a model
-def train_or_load_model(model_name, model_class, X_train, y_train, load_model=True):
+def train_or_load_model(model_name, train_func, X_train, y_train, load_model=True):
     if load_model:
         try:
             model = ModelManager.load_model(model_name)
             print("Model loaded")
         except ValueError:
-            print("No pre-trained model found. Training a new model...")
-            model = model_class()
-            model.train(X_train, y_train)
+            model = train_func(X_train, y_train)
+            print(f"{model_name.capitalize()} model trained")
     else:
-        model = model_class()
-        model.train(X_train, y_train)
+        model = train_func(X_train, y_train)
+        print(f"{model_name.capitalize()} model trained")
     return model
 
 
@@ -118,26 +123,46 @@ def manage_models(X_train, y_train, X_test, y_test, model_choice):
         y_test: Test labels.
         model_choice: Selected model from the menu.
     """
-    # Define model mapping: maps models to their respective classes
+    # Define model mapping: maps models to their training, evaluation, normalization, and balancing functions
     model_mapping = {
+        'GradientBoostingClassifier': {
+            'train_func': train_gradient_boosting,
+            'support_importances': True,
+            'support_explainability': True,  # SHAP and LIME supported
+            'normalize': False,  # No normalization required
+            'balance_data': True  # Requires data balancing
+        },
         'DecisionTreeClassifier': {
-            'class': DecisionTreeModel,
+            'train_func': train_decision_tree,
+            'support_importances': True,
+            'support_explainability': False,  # SHAP and LIME not needed
             'normalize': True,  # Requires normalization
             'balance_data': True  # Requires data balancing
         },
         'XGBClassifier': {
-            'class': XGBoostModel,
+            'train_func': train_xgboost,
+            'support_importances': True,
+            'support_explainability': True,  # SHAP and LIME supported
+            'normalize': False,  # No normalization required
+            'balance_data': False  # Handles imbalance internally
+        },
+        'LGBMClassifier': {
+            'train_func': train_lightgbm,
+            'support_importances': True,
+            'support_explainability': True,  # SHAP and LIME supported
             'normalize': False,  # No normalization required
             'balance_data': False  # Handles imbalance internally
         },
         'LogisticRegression': {
-            'class': LogisticRegressionModel,
+            'train_func': train_logistic_regression,
+            'support_importances': False,
+            'support_explainability': True,  # SHAP and LIME not needed
             'normalize': True,  # Requires normalization
             'balance_data': False  # Requires data balancing
         }
     }
 
-    # Get the appropriate class and settings for the selected model
+    # Get the appropriate functions and settings for the selected model
     model_info = model_mapping.get(model_choice)
     if not model_info:
         print(f"Model {model_choice} is not supported.")
@@ -185,21 +210,29 @@ def manage_models(X_train, y_train, X_test, y_test, model_choice):
         X_train, X_test = normalize_data(X_train, X_test)
 
     # Train or load the model
-    model = train_or_load_model(model_choice, model_info['class'], X_train, y_train, load_model)
+    train_func = model_info['train_func']
+    model = train_or_load_model(model_choice, train_func, X_train, y_train, load_model)
 
     print("")
     # Evaluate the model
-    model.evaluate_model(X_test, y_test)
+    evaluate_model(model, X_test, y_test)
 
     if not load_model:
         ModelManager.save_model(model)
 
+    # Display feature importances if the model supports it
+    # if model_info['support_importances'] and hasattr(model, "feature_importances_"):
+    #     feature_names = X_train.columns  # Get feature names
+    #     GlobalExplainer.display_feature_importances(model, feature_names)
+        # plot_feature_importances(model, feature_names)
+
+    # # Perform global explanations (e.g., SHAP) if the model supports explainability
+    # if model_info['support_explainability']:
     print("\nPerforming global explanations...")
-    model.global_explain(X_train=X_train)
+    GlobalExplainer.explain_model(model, X_train, X_test, y_train)
 
-    # print("\nPerforming local explanations using LIME...")
-
-    LocalExplainer.analyze_individual_risk(model, X_test, y_test, X_train)
+        # print("\nPerforming local explanations using LIME...")
+        # LocalExplainer.analyze_individual_risk(model, X_test, y_test)
 
 
 def main():
@@ -218,8 +251,12 @@ def main():
     data = feature_engineering(data)
     data = preprocess_data(data)
 
-    X = data.drop(columns=['hospital_death'])
-    y = data['hospital_death']
+    if 'hospital_death' in data.columns:
+        X = data.drop(columns=['hospital_death'])
+        y = data['hospital_death']
+    else:
+        print("Target column 'hospital_death' not found.")
+        return
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 

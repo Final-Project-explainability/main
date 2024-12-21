@@ -142,7 +142,7 @@ def train_gradient_boosting(X_train, y_train):
     return model
 
 
-def train_xgboost(X_train, y_train, params_path="jsons/best_params.json", tune=False):
+def train_xgboost(X_train, y_train, params_path="jsons/best_params.json", fine_tune=False, tune  =False):
     """
     Train an XGBoost model with optional hyperparameter tuning, feature selection, and long-run optimization.
     Args:
@@ -219,7 +219,32 @@ def train_xgboost(X_train, y_train, params_path="jsons/best_params.json", tune=F
 
     model = xgb.XGBClassifier(**best_params)
 
+    # Fine-tune the model (if enabled)
+    if fine_tune:
+        print("Starting fine-tuning on the validation set...")
+        model = fine_tune_xgboost(model, X_val, y_val)
+
     model.fit(X_train, y_train)
+    return model
+
+
+def fine_tune_xgboost(model, X_val, y_val):
+    """
+    Fine-tune an XGBoost model using early stopping on a validation set.
+    """
+    # Ensure the model is an XGBClassifier instance
+    if not isinstance(model, xgb.XGBClassifier):
+        raise ValueError("The model provided is not an instance of xgb.XGBClassifier.")
+
+    eval_set = [(X_val, y_val)]
+
+    try:
+        # Attempt to use early stopping
+        model.fit(X_val, y_val, eval_set=eval_set, early_stopping_rounds=10, verbose=True)
+    except TypeError:
+        print("Early stopping not supported in the current XGBoost version. Training without early stopping.")
+        model.fit(X_val, y_val, eval_set=eval_set, verbose=True)
+
     return model
 
 

@@ -4,73 +4,13 @@ import xgboost as xgb
 import lightgbm as lgb
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 import shap
 import pandas as pd
 import seaborn as sns
-import lime
-import lime.lime_tabular
-import os
-import tempfile
-import webbrowser
-from explainability.src.Models.Model import Model
 
 
-def explain_with_lime(model, X_train, X_instance, save_image_path=None, save_html_path=None):
-    """
-    Explains a prediction for an XGBoost or LGBM model using LIME.
-    Always saves and displays the explanation as an HTML file and an image (bar plot).
-
-    Args:
-        model: The trained model (e.g., XGBoost or LightGBM).
-        X_train: A pandas DataFrame representing the training data.
-        X_instance: A pandas DataFrame row representing the instance to explain.
-        save_image_path: Optional path to save the explanation figure as an image.
-        save_html_path: Optional path to save the explanation as an HTML file.
-
-    Returns:
-        None. Saves and displays both HTML and image explanations.
-    """
-    # Set default class names
-    class_names = ['Survive', 'Death']
-
-    # Prepare the feature names
-    feature_names = X_train.columns.tolist()
-
-    # Create LIME explainer
-    explainer = lime.lime_tabular.LimeTabularExplainer(
-        training_data=X_train.values,  # Training data
-        feature_names=feature_names,  # Feature names
-        class_names=class_names,  # Class names for the output
-        mode='classification',  # Model type
-        discretize_continuous=True  # Discretize continuous features
-    )
-
-    # Explain the single instance
-    explanation = explainer.explain_instance(
-        X_instance.values[0],  # Instance to explain
-        model.predict_proba  # Prediction function
-    )
-
-    # Save explanation as HTML (always)
-    if not save_html_path:
-        # Generate a temporary HTML file if save path not provided
-        html_file = tempfile.NamedTemporaryFile(delete=False, suffix=".html")
-        save_html_path = html_file.name
-
-    explanation.save_to_file(save_html_path)
-    print(f"LIME explanation saved as HTML at: {os.path.abspath(save_html_path)}")
-
-    # Automatically open the HTML in the default browser
-    webbrowser.open(f"file://{os.path.abspath(save_html_path)}")
-
-    # Generate and save/display the explanation as a bar plot
-    fig = explanation.as_pyplot_figure()
-    plt.title("LIME Explanation - Feature Contributions")
-    plt.tight_layout()
-    plt.show()
-
-
-def explain_prediction(model, X_instance, prob_death, X_train):
+def explain_prediction(model, X_instance, prob_death):
     """
     Explains the prediction of the given model for a specific instance.
 
@@ -82,9 +22,8 @@ def explain_prediction(model, X_instance, prob_death, X_train):
     Returns:
         None. Displays the explanation via SHAP or other methods.
     """
-    if isinstance(model, (xgb.XGBClassifier, lgb.LGBMClassifier)):
+    if isinstance(model, (xgb.XGBClassifier, lgb.LGBMClassifier, RandomForestClassifier)):
         explain_with_shap(model, X_instance, prob_death)
-        explain_with_lime(model, X_train, X_instance, prob_death)
     elif isinstance(model, DecisionTreeClassifier):
         explain_with_decision_tree(model, X_instance)
     elif isinstance(model, LogisticRegression):
@@ -252,8 +191,7 @@ def explain_with_logistic_regression(model, X_instance, predicted_probability):
                  color='black')
 
     # Title for the plot
-    plt.title(
-        "Feature Contributions for Logistic Regression Prediction.    " + f"Probability of Death: {predicted_probability:.4f} ")
+    plt.title("Feature Contributions for Logistic Regression Prediction.    " + f"Probability of Death: {predicted_probability:.4f} ")
 
     # Adjust layout to make space for the text annotations
     plt.tight_layout(rect=(0, 0, 0.9, 1))  # Adjust the layout to prevent overlap with text
@@ -262,7 +200,7 @@ def explain_with_logistic_regression(model, X_instance, predicted_probability):
     plt.show()
 
 
-def analyze_individual_risk(model, X_test, y_test, X_train):
+def analyze_individual_risk(model, X_test, y_test):
     """
     Analyze and visualize the mortality risk for a specific row in the dataset.
 
@@ -294,7 +232,7 @@ def analyze_individual_risk(model, X_test, y_test, X_train):
             else:
                 print("The patient was dead in the end of the hospitalization")
 
-            model.local_explain(X_train=X_train, X_instance=individual_data, predicted_probability=prob_death[0])
+            explain_prediction(model, individual_data, prob_death[0])
 
         except ValueError:
             print("Invalid input. Please enter a numeric row number.")

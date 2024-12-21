@@ -1,11 +1,11 @@
 import json
 import os
 import joblib
-from explainability.src.Models.Model import Model
+import hashlib
 
 
 class ModelManager:
-    CONFIG_PATH = "../data/jsons/model_configs.json"  # Static path for configuration file
+    CONFIG_PATH = "jsons/model_configs.json"  # Static path for configuration file
 
     @staticmethod
     def _load_config():
@@ -35,6 +35,30 @@ class ModelManager:
             json.dump(config, f, indent=4)
 
     @staticmethod
+    def _hash_model(model):
+        """
+        Generate a unique hash for the given model. The hash is based on the model's parameters
+        and the number of input features (if available).
+
+        This hash can be used to distinguish between different models, including those trained
+        on different data or with different parameters.
+
+        Parameters:
+            model: The machine learning model to generate a hash for.
+
+        Returns:
+            str: The hash string representing the model.
+        """
+        # Get model parameters as string
+        model_params = str(model.get_params()) if hasattr(model, 'get_params') else str(model)
+
+        # Combine model parameters and feature count
+        combined_str = model_params + str(getattr(model, 'n_features_in_', ''))
+
+        # Generate and return the hash
+        return hashlib.sha256(combined_str.encode('utf-8')).hexdigest()
+
+    @staticmethod
     def get_path(model):
         """
         Determine the path where the model should be saved, based on the model's type and a unique hash.
@@ -45,13 +69,13 @@ class ModelManager:
         Returns:
             str: The path where the model should be saved.
         """
-        model_name = model.get_name()
+        model_hash = ModelManager._hash_model(model)
 
         # Determine paths for saving
-        model_type = model.get_type()
-        model_dir = f"../data/models/{model_type}"
+        model_type = type(model).__name__
+        model_dir = f"models/{model_type}"
         os.makedirs(model_dir, exist_ok=True)
-        return f"{model_dir}/{model_name}"
+        return f"{model_dir}/{model_type}_{model_hash}"
 
     @staticmethod
     def save_model(model):
@@ -71,7 +95,7 @@ class ModelManager:
         joblib.dump(model, model_path)
         # Update configuration
         config = ModelManager._load_config()
-        model_type = model.get_type()
+        model_type = type(model).__name__
         config[model_type] = {
             "latest_model": model_path
         }
@@ -95,7 +119,15 @@ class ModelManager:
 
         with open(shap_path, 'wb') as f:
             joblib.dump(shap_values, f)
-        print(f"SHAP values saved for {model.get_type()}. Paths updated in config.")
+
+        # Update configuration
+        config = ModelManager._load_config()
+        model_type = type(model).__name__
+        config[model_type] = {
+            "latest_shap": shap_path,
+        }
+        ModelManager._save_config(config)
+        print(f"SHAP values saved for {model_type}. Paths updated in config.")
 
     @staticmethod
     def load_model(model_type):
