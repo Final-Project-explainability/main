@@ -3,6 +3,6 @@
         "latest_model": "../data/models/XGBClassifier/XGBClassifier_2024-12-20_18-25-48.joblib"
     },
     "DecisionTreeClassifier": {
-        "latest_model": "../data/models/DecisionTreeClassifier/DecisionTreeClassifier_2024-12-21_16-44-17.joblib"
+        "latest_model": "../data/models/DecisionTreeClassifier/DecisionTreeClassifier_2024-12-21_20-24-10.joblib"
     }
 }
