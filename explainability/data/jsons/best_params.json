@@ -1,0 +1,12 @@
+{
+    "max_depth": 5,
+    "learning_rate": 0.003,
+    "n_estimators": 10000,
+    "min_child_weight": 5,
+    "gamma": 0.001,
+    "subsample": 0.7085636696497406,
+    "colsample_bytree": 0.725317379458061,
+    "objective": "binary:logistic",
+    "eval_metric": "logloss",
+    "scale_pos_weight": 9.9
+}

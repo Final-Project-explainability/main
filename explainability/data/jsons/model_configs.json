@@ -1,0 +1,5 @@
+{
+    "XGBClassifier": {
+        "latest_model": "../data/models/XGBClassifier/XGBClassifier_2024-12-20_18-25-48.joblib"
+    }
+}

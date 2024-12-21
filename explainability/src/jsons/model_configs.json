@@ -1,6 +1,0 @@
-{
-    "XGBClassifier": {
-        "latest_model": "models/XGBClassifier/XGBClassifier_68d5eb69ffa8bd8943627a6911669e2f3ef4a7ac796d2904c0749c6702c6a443.joblib",
-        "latest_shap": "models/XGBClassifier/XGBClassifier_68d5eb69ffa8bd8943627a6911669e2f3ef4a7ac796d2904c0749c6702c6a443_shap.pkl"
-    }
-}
