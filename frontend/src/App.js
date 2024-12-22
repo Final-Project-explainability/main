@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import Login from './components/Login';
-import InfoPanel from './components/InfoPanel';
-import './styles.css';
+import React, { useState } from "react";
+import Login from "./components/Login";
+import Dashboard from "./components/Dashboard"; // Import Dashboard
+import InfoPanel from "./components/InfoPanel"; // InfoPanel remains in App
+import "./styles.css";
 
 function App() {
     // State to manage login status and user details
@@ -12,8 +13,8 @@ function App() {
     const handleLogin = (username) => {
         setUserDetails({
             name: username,
-            licenseId: '123465',
-            specialty: 'ER Physician',
+            licenseId: "123465",
+            specialty: "ER Physician",
         });
         setIsLoggedIn(true);
     };
@@ -28,18 +29,7 @@ function App() {
         <div className="main-container">
             <div className="left-panel">
                 {isLoggedIn ? (
-                    <div className="user-info">
-                        <h2>Hello, Dr. {userDetails.name}!</h2>
-                        <p>
-                            <strong>Medical License ID:</strong> {userDetails.licenseId}
-                        </p>
-                        <p>
-                            <strong>Medical Specialties:</strong> {userDetails.specialty}
-                        </p>
-                        <button className="logout-button" onClick={handleLogout}>
-                            Logout
-                        </button>
-                    </div>
+                    <Dashboard user={userDetails} onLogout={handleLogout} />
                 ) : (
                     <Login onLogin={handleLogin} />
                 )}

@@ -439,3 +439,316 @@ body {
 
 
 
+
+
+
+
+
+
+
+
+
+
+/*!* User Profile *!*/
+/*.user-profile {*/
+/*    display: flex;*/
+/*    flex-direction: column;*/
+/*    align-items: center;*/
+/*    background-color: #004d4d;*/
+/*    color: white;*/
+/*    padding: 20px;*/
+/*    border-radius: 10px;*/
+/*    !*box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);*!*/
+/*    width: 100%;*/
+/*    max-width: 300px;*/
+/*}*/
+
+
+/*!* User Avatar Section *!*/
+/*.user-avatar {*/
+/*    width: 250px; !* Adjust size as needed *!*/
+/*    height: 250px; !* Maintain equal width and height for circular shape *!*/
+/*    border-radius: 50%; !* Ensures circular shape *!*/
+/*    border: 3px solid #ffffff; !* White border *!*/
+/*    background-image: url('https://meshek8.co.il/wp-content/uploads/2021/02/%D7%A6%D7%99%D7%9C%D7%95%D7%9D_%D7%A4%D7%A8%D7%95%D7%A4%D7%99%D7%9C_1.jpg'); !* Avatar URL *!*/
+/*    background-size: cover; !* Makes sure the image fully covers the container *!*/
+/*    background-position: center; !* Centers the image *!*/
+/*    background-repeat: no-repeat; !* Prevents tiling of the image *!*/
+/*    margin-bottom: 25px; !* Space below the avatar *!*/
+/*    display: block; !* Ensure the div behaves like a block element *!*/
+/*    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); !* Optional: Add subtle shadow *!*/
+/*}*/
+
+
+/*!* User Details *!*/
+/*.user-details h2 {*/
+/*    font-size: 20px;*/
+/*    margin-bottom: 10px;*/
+/*    color: #ffffff;*/
+/*    text-align: center;*/
+/*}*/
+
+/*.user-details p {*/
+/*    font-size: 14px;*/
+/*    margin: 5px 0;*/
+/*    color: #f0f0f0;*/
+/*    text-align: center;*/
+/*}*/
+
+/*!* Action Buttons *!*/
+/*.action-buttons {*/
+/*    display: flex;*/
+/*    flex-direction: column;*/
+/*    width: 100%;*/
+/*    gap: 10px;*/
+/*    margin-top: 20px;*/
+/*}*/
+
+/*.action-button {*/
+/*    background-color: #ffffff;*/
+/*    color: #004d4d;*/
+/*    padding: 10px 15px;*/
+/*    font-size: 14px;*/
+/*    font-weight: bold;*/
+/*    border: none;*/
+/*    border-radius: 5px;*/
+/*    cursor: pointer;*/
+/*    transition: background-color 0.3s ease;*/
+/*}*/
+
+/*.action-button:hover {*/
+/*    background-color: #006666;*/
+/*    color: white;*/
+/*}*/
+
+/*.logout-button {*/
+/*    background-color: #e74c3c;*/
+/*    color: white;*/
+/*    padding: 10px 15px;*/
+/*    font-size: 14px;*/
+/*    font-weight: bold;*/
+/*    border: none;*/
+/*    border-radius: 5px;*/
+/*    cursor: pointer;*/
+/*    transition: background-color 0.3s ease;*/
+/*}*/
+
+/*.logout-button:hover {*/
+/*    background-color: #c0392b;*/
+/*}*/
+
+
+
+.user-profile {
+    background: linear-gradient(135deg, #f0f8ff, #e6f7f7); /* Soft gradient for a calming medical look */
+    color: #004d66; /* Dark teal text for a professional and clean look */
+    padding: 30px;
+    border-radius: 20px; /* Rounded corners for a softer feel */
+    position: relative;
+    width: 100%;
+    max-width: 450px; /* Maximum width for better responsiveness */
+    font-family: 'Poppins', sans-serif; /* Modern and clean font */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Light shadow for a floating card effect */
+    text-align: center; /* Center-aligns all child elements */
+}
+
+.user-profile::before {
+    content: ''; /* Decorative blur background */
+    position: absolute;
+    top: -50px; /* Positioned outside the main container */
+    right: -50px;
+    width: 200px;
+    height: 200px;
+    background: linear-gradient(45deg, #99d9ea, #c2f0f0); /* Subtle blue gradient */
+    filter: blur(100px); /* Softens the gradient */
+    z-index: 0; /* Ensures it's behind all other elements */
+}
+
+.user-avatar {
+    width: 250px;
+    height: 250px;
+    border-radius: 50%; /* Ensures the image is circular */
+    border: 4px solid #4db6ac; /* Soft green border for highlighting */
+    background-image: url('https://t4.ftcdn.net/jpg/06/32/90/79/360_F_632907942_M6CVHD1ivhUrWK1X49PkBlSH3ooNPsog.jpg'); /* URL for profile image */
+    background-size: cover; /* Ensures the image fills the circle */
+    background-position: center; /* Centers the image within the container */
+    margin: 0 auto 20px; /* Centers the image and adds space below */
+    position: relative; /* Maintains relative positioning */
+    z-index: 1; /* Ensures it's above the blurred background */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Adds subtle depth */
+}
+
+.user-details h2 {
+    font-size: 22px; /* Slightly larger for prominence */
+    color: #004d66; /* Consistent with the teal color scheme */
+    margin-bottom: 10px;
+    text-transform: capitalize; /* Capitalizes only the first letter of each word */
+    letter-spacing: 1px; /* Adds spacing for better readability */
+    z-index: 1;
+}
+
+.user-details p {
+    font-size: 14px; /* Standard size for body text */
+    color: #00695c; /* A darker green for contrast */
+    margin: 5px 0; /* Adds space between paragraphs */
+    z-index: 1;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column; /* Stacks buttons vertically */
+    gap: 15px; /* Adds space between the buttons */
+    margin-top: 25px; /* Adds separation from the details above */
+    z-index: 1; /* Ensures it's above the blurred background */
+    width: 100%; /* Ensures buttons fill the container width */
+}
+
+.action-button {
+    background: linear-gradient(90deg, #ffffff, #f0f8ff); /* Light gradient for a clean look */
+    color: #004d66; /* Dark teal for text */
+    border: 2px solid #4db6ac; /* Green border for consistency */
+    padding: 12px; /* Comfortable padding for the button */
+    font-size: 15px; /* Slightly larger for emphasis */
+    font-weight: bold; /* Makes the button text stand out */
+    border-radius: 8px; /* Rounded corners for a friendly look */
+    cursor: pointer; /* Changes the cursor to a pointer on hover */
+    transition: transform 0.3s ease, background-color 0.3s ease; /* Smooth transition effects */
+}
+
+.action-button:hover {
+    background: #4db6ac; /* Bright green for hover effect */
+    color: white; /* Changes text color to white for contrast */
+    transform: translateY(-5px); /* Subtle movement for interactivity */
+}
+
+.logout-button {
+    background: linear-gradient(90deg, #ff6f61, #ff867c); /* Soft gradient in red tones */
+    color: white; /* White text for good contrast */
+    padding: 12px; /* Comfortable padding for the button */
+    border: none; /* Removes default border */
+    border-radius: 10px; /* Rounded corners for a friendly feel */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth hover effect */
+}
+
+.logout-button:hover {
+    background: #e53935; /* Darker red for hover effect */
+    transform: scale(1.05); /* Slight enlargement for interactivity */
+}
+
+
+
+/* General styling for App container */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* MenuBar Styling */
+.menu-bar {
+    display: flex;
+    justify-content: space-between; /* Distributes items evenly */
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #004d66; /* Teal background */
+    color: white;
+    position: sticky; /* Keeps it fixed at the top */
+    top: 0; /* Positions it at the very top */
+    z-index: 1000; /* Ensures it appears above other elements */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Adds a shadow */
+}
+
+/* Hamburger and other icons */
+.menu-icon {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: white;
+    cursor: pointer;
+    padding: 10px;
+    transition: color 0.3s ease;
+}
+
+.menu-icon:hover {
+    color: #00bfa5; /* Lighter teal hover effect */
+}
+
+/* Logo or Home section */
+.menu-logo {
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    gap: 10px;
+    text-transform: uppercase;
+}
+
+/* Search Bar */
+.search-container {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border-radius: 25px;
+    padding: 5px 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Adds subtle shadow */
+}
+
+.search-input {
+    border: none;
+    outline: none;
+    font-size: 14px;
+    padding: 5px 10px;
+    color: #004d66;
+    width: 200px; /* Default width */
+}
+
+.search-icon {
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: #004d66;
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+.search-icon:hover {
+    color: #00796b; /* Teal hover effect */
+}
+
+/* Adjustments for mobile view */
+@media (max-width: 768px) {
+    .search-input {
+        width: 120px; /* Narrower for small screens */
+    }
+
+    .menu-logo {
+        font-size: 16px; /* Slightly smaller font */
+    }
+
+    .menu-icon {
+        font-size: 18px; /* Adjust icon size */
+    }
+}
+
+
+
+.global-page {
+    padding: 20px;
+    text-align: center;
+}
+
+.global-page h1 {
+    font-size: 2.5rem;
+    color: #333;
+}
+
+.global-page p {
+    font-size: 1.2rem;
+    color: #666;
+}
+
+
+
+
