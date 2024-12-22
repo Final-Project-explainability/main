@@ -1,31 +1,54 @@
 import React, { useState } from 'react';
 import Login from './components/Login';
-import Dashboard from './components/Dashboard'; // Import the Dashboard component
+import InfoPanel from './components/InfoPanel';
+import './styles.css';
 
 function App() {
-    // State to manage the logged-in user
-    const [user, setUser] = useState(null);
+    // State to manage login status and user details
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [userDetails, setUserDetails] = useState(null);
 
     // Handle user login
     const handleLogin = (username) => {
-        setUser(username); // Save the username after login
+        setUserDetails({
+            name: username,
+            licenseId: '123465',
+            specialty: 'ER Physician',
+        });
+        setIsLoggedIn(true);
     };
 
     // Handle user logout
     const handleLogout = () => {
-        setUser(null); // Clear the user on logout
+        setUserDetails(null);
+        setIsLoggedIn(false);
     };
 
     return (
-        <div>
-            {/* Render Dashboard if user is logged in, otherwise show Login page */}
-            {user ? (
-                <Dashboard user={user} onLogout={handleLogout} />
-            ) : (
-                <Login onLogin={handleLogin} />
-            )}
+        <div className="main-container">
+            <div className="left-panel">
+                {isLoggedIn ? (
+                    <div className="user-info">
+                        <h2>Hello, Dr. {userDetails.name}!</h2>
+                        <p>
+                            <strong>Medical License ID:</strong> {userDetails.licenseId}
+                        </p>
+                        <p>
+                            <strong>Medical Specialties:</strong> {userDetails.specialty}
+                        </p>
+                        <button className="logout-button" onClick={handleLogout}>
+                            Logout
+                        </button>
+                    </div>
+                ) : (
+                    <Login onLogin={handleLogin} />
+                )}
+            </div>
+            <div className="right-panel">
+                <InfoPanel isLoggedIn={isLoggedIn} />
+            </div>
         </div>
     );
 }
 
-export default App; // Export the App component
+export default App;
