@@ -13,7 +13,6 @@ import numpy as np
 from explainability.src.ModelManager import ModelManager
 from explainability.src.Models.Model import Model
 import pandas as pd
-from XGBoostTreeApproximator.FBT import FBT
 
 
 class XGBoostModel(Model):
@@ -112,7 +111,7 @@ class XGBoostModel(Model):
         self.explain_with_lime(X_train, X_instance)
 
     def global_explain(self, X_train,y_train):
-        self.train_and_visualize_fbt(X_train = X_train, y_train=y_train, xgb_model= self)
+        # self.train_and_visualize_fbt(X_train = X_train, y_train=y_train, xgb_model= self)
         self.global_explain_with_shap(X_train=X_train)
 
 
@@ -168,14 +167,16 @@ class XGBoostModel(Model):
 
     def global_explain_with_shap(self, X_train):
         """
-            Explain the model with SHAP values, using pre-saved values if available.
-            If SHAP values are not found, compute them and save both model and SHAP.
-            Args:
-                model: The trained model object.
-                X_train: The dataset used for SHAP computation.
-            Returns:
-                shap_values: The SHAP values for the model.
-            """
+        Explain the model with SHAP values, using pre-saved values if available.
+        If SHAP values are not found, compute them and save both model and SHAP.
+        Additionally, save feature importance as percentages in a sorted JSON file.
+
+        Args:
+            model: The trained model object.
+            X_train: The dataset used for SHAP computation.
+        Returns:
+            shap_values: The SHAP values for the model.
+        """
         try:
             # Attempt to load SHAP values if they exist
             shap_values = ModelManager.load_shap(self)
@@ -187,6 +188,33 @@ class XGBoostModel(Model):
             # Save the SHAP values and the model type
             ModelManager.save_shap(self, shap_values)
 
+        # Compute mean absolute SHAP values for each feature
+        shap_means = np.abs(shap_values).mean(axis=0)
+
+        # Normalize to percentages
+        shap_percentages = (shap_means / shap_means.sum()) * 100
+
+        # Convert to a Python float (from np.float32) for JSON compatibility
+        shap_percentages = shap_percentages.astype(float)
+
+        # Prepare a dictionary of features and their importance percentages
+        feature_importance = {
+            feature: percentage
+            for feature, percentage in zip(X_train.columns, shap_percentages)
+        }
+
+        # Sort the dictionary by values (importance) in descending order
+        sorted_feature_importance = dict(
+            sorted(feature_importance.items(), key=lambda item: item[1], reverse=True)
+        )
+
+        # Save to JSON file
+        with open("feature_importance.json", "w") as f:
+            json.dump(sorted_feature_importance, f, indent=4)
+
+        print("Sorted feature importance saved to 'feature_importance.json'.")
+
+        # Display the SHAP summary plot
         shap.summary_plot(shap_values, X_train)
 
         return shap_values
