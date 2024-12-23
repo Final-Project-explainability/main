@@ -88,12 +88,16 @@ class DecisionTreeModel(Model):
         plt.tight_layout(rect=(0, 0, 0.9, 1))  # Adjust the layout to prevent overlap with text
         plt.show()
 
-    def global_explain(self, X_train ,y_train):
+    def global_explain(self, X_train, y_train):
         """
-            Display and plot the feature importances from a trained Decision Tree model.
-            Args:
-                X_train: The dataset used for the model's training.
-            """
+        Display and plot the feature importances from a trained Decision Tree model,
+        and save feature importance in a sorted JSON file.
+
+        Args:
+            X_train: The dataset used for the model's training.
+        Returns:
+            feature_importances: The sorted feature importances for all features.
+        """
         feature_names = X_train.columns
 
         # Extract feature importances
@@ -105,19 +109,34 @@ class DecisionTreeModel(Model):
             "Importance": importances
         })
 
-        # Sort features by importance in descending order
-        feature_importances = feature_importances.sort_values(by="Importance", ascending=False)
+        # Compute relative importance as percentages
+        feature_importances['Importance (%)'] = (feature_importances['Importance'] / feature_importances[
+            'Importance'].sum()) * 100
 
-        # Select the top 20 features
+        # Sort features by importance in descending order
+        feature_importances = feature_importances.sort_values(by="Importance (%)", ascending=False)
+
+        # Save all feature importances to JSON
+        feature_importance_dict = {
+            row['Feature']: float(row['Importance (%)'])
+            for _, row in feature_importances.iterrows()
+        }
+
+        with open("decision_tree_feature_importance.json", "w") as f:
+            json.dump(feature_importance_dict, f, indent=4)
+
+        print("Feature importance saved to 'decision_tree_feature_importance.json'.")
+
+        # Select the top 20 features for visualization
         top_20_features = feature_importances.head(20)
 
         # Plot the feature importances as a horizontal bar chart
         plt.figure(figsize=(8, 9.5))  # Adjust this ratio as needed
 
         # Create horizontal bar plot with reversed order so the most important feature is at the top
-        plt.barh(top_20_features['Feature'][::-1], top_20_features['Importance'][::-1], color='skyblue')
+        plt.barh(top_20_features['Feature'][::-1], top_20_features['Importance (%)'][::-1], color='skyblue')
 
-        plt.xlabel('Importance')
+        plt.xlabel('Importance (%)')
         plt.title('Top 20 Feature Importances')
 
         # Ensure labels are horizontal for better readability
@@ -126,4 +145,4 @@ class DecisionTreeModel(Model):
 
         plt.show()
 
-        return top_20_features
+        return feature_importances
