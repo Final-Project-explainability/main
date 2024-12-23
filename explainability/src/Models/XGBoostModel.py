@@ -13,6 +13,7 @@ import numpy as np
 from explainability.src.ModelManager import ModelManager
 from explainability.src.Models.Model import Model
 import pandas as pd
+from XGBoostTreeApproximator.FBT import FBT
 
 
 class XGBoostModel(Model):
@@ -110,16 +111,57 @@ class XGBoostModel(Model):
         self.local_explain_with_shap(X_instance, predicted_probability)
         self.explain_with_lime(X_train, X_instance)
 
-    def global_explain(self, X_train):
+    def global_explain(self, X_train,y_train):
         self.global_explain_with_shap(X_train=X_train)
+        self.train_and_visualize_fbt(X_train = X_train, y_train=y_train, xgb_model= self)
 
+    def train_and_visualize_fbt(self,X_train,y_train, xgb_model, max_depth=5, min_forest_size=10,
+                                max_number_of_conjunctions=100, pruning_method='auc'):
 
-    def explain_with_fbt(self):
         try:
-            fbt = ModelManager.load_fbt(self)
+            fbt = ModelManager.load_fbt(xgb_model)
+            print(" ss fbt")
+        except:  # train fbt base on the given model
+            # Combine X_train and y_train into a single DataFrame
+            train_data = X_train.copy()
+            train_data['hospital_death'] = y_train  # Add the label column
+
+            # Extract feature names
+            feature_cols = X_train.columns.tolist()
+            label_col = 'hospital_death'  # Name of the label column
+
+            # Prepare FBT
+            fbt = FBT(max_depth=max_depth,
+                      min_forest_size=min_forest_size,
+                      max_number_of_conjunctions=max_number_of_conjunctions,
+                      pruning_method=pruning_method)
+
+            X_train_sample = train_data.sample(frac=0.1, random_state=42)
+
+            # Fit the FBT model to the training data
+            fbt.fit(X_train_sample, feature_cols, label_col, xgb_model)
+
+            print("FBT model trained successfully.")
+
+            ModelManager.save_fbt(xgb_model, fbt)
+
+        # Visualize the tree (example code for visualization)
+        try:
+            print("Generating visualization...")
+            train_data = X_train.copy()
+            train_data['hospital_death'] = y_train  # Add the label column
+            X_train_sample = train_data.sample(frac=0.05, random_state=42)
+            # print(fbt.get_decision_paths(X_train_sample))
+            paths = fbt.get_decision_paths(X_train_sample)
+            for i, path in enumerate(paths):
+                print(f" path  {i + 1}:")
+                for step in path:
+                    print(f"  {step}")
+
         except Exception as e:
-            print(e)
-            
+            print(f"Failed to generate visualization: {e}")
+
+        return fbt
 
     def global_explain_with_shap(self, X_train):
         """

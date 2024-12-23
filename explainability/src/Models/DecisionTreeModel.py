@@ -88,7 +88,7 @@ class DecisionTreeModel(Model):
         plt.tight_layout(rect=(0, 0, 0.9, 1))  # Adjust the layout to prevent overlap with text
         plt.show()
 
-    def global_explain(self, X_train):
+    def global_explain(self, X_train ,y_train):
         """
             Display and plot the feature importances from a trained Decision Tree model.
             Args:

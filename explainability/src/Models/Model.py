@@ -29,6 +29,10 @@ class Model(ABC):
         pass
 
     @abstractmethod
+    def global_explain(self, X_train ,y_train):
+        pass
+
+    @abstractmethod
     def global_explain(self, X_train):
         pass
 

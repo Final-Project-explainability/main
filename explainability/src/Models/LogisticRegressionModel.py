@@ -85,7 +85,7 @@ class LogisticRegressionModel(Model):
         # Show the plot
         plt.show()
 
-    def global_explain(self, X_train):
+    def global_explain(self, X_train ,y_train):
         """
         Explain the logistic regression model using coefficients.
 
