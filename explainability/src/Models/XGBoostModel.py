@@ -112,8 +112,9 @@ class XGBoostModel(Model):
         self.explain_with_lime(X_train, X_instance)
 
     def global_explain(self, X_train,y_train):
-        self.global_explain_with_shap(X_train=X_train)
         self.train_and_visualize_fbt(X_train = X_train, y_train=y_train, xgb_model= self)
+        self.global_explain_with_shap(X_train=X_train)
+
 
     def train_and_visualize_fbt(self,X_train,y_train, xgb_model, max_depth=5, min_forest_size=10,
                                 max_number_of_conjunctions=100, pruning_method='auc'):
@@ -152,6 +153,8 @@ class XGBoostModel(Model):
             train_data['hospital_death'] = y_train  # Add the label column
             X_train_sample = train_data.sample(frac=0.05, random_state=42)
             # print(fbt.get_decision_paths(X_train_sample))
+            print(fbt.predict_proba(X_train_sample[0]))
+            print("************")
             paths = fbt.get_decision_paths(X_train_sample)
             for i, path in enumerate(paths):
                 print(f" path  {i + 1}:")
