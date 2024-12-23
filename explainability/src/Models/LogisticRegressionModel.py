@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -85,9 +87,9 @@ class LogisticRegressionModel(Model):
         # Show the plot
         plt.show()
 
-    def global_explain(self, X_train ,y_train):
+    def global_explain(self, X_train, y_train):
         """
-        Explain the logistic regression model using coefficients.
+        Explain the logistic regression model using coefficients and save feature importance in JSON.
 
         Args:
             model: The trained Logistic Regression model.
@@ -104,10 +106,24 @@ class LogisticRegressionModel(Model):
         coef_df = pd.DataFrame({'Feature': feature_names, 'Coefficient': coefficients})
         coef_df['Absolute Coefficient'] = coef_df['Coefficient'].abs()
 
-        # Sort by absolute value of coefficient for better interpretability
-        coef_df = coef_df.sort_values(by='Absolute Coefficient', ascending=False)
+        # Compute relative importance as percentages
+        coef_df['Importance (%)'] = (coef_df['Absolute Coefficient'] / coef_df['Absolute Coefficient'].sum()) * 100
 
-        # Select only the top 20 features
+        # Sort by importance for better interpretability
+        coef_df = coef_df.sort_values(by='Importance (%)', ascending=False)
+
+        # Save all feature importances to JSON
+        feature_importance = {
+            row['Feature']: float(row['Importance (%)'])
+            for _, row in coef_df.iterrows()
+        }
+
+        with open("logistic_feature_importance.json", "w") as f:
+            json.dump(feature_importance, f, indent=4)
+
+        print("Feature importance saved to 'logistic_feature_importance.json'.")
+
+        # Select only the top 20 features for visualization
         top_20_coef_df = coef_df.head(20)
 
         # Plot the coefficients for the top 20 features with adjusted figsize
@@ -125,4 +141,4 @@ class LogisticRegressionModel(Model):
 
         plt.show()
 
-        return top_20_coef_df
+        return coef_df

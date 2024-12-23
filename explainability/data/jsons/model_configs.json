@@ -4,5 +4,8 @@
     },
     "DecisionTreeClassifier": {
         "latest_model": "../data/models/DecisionTreeClassifier/DecisionTreeClassifier_2024-12-23_12-16-29.joblib"
+    },
+    "LogisticRegression": {
+        "latest_model": "../data/models/LogisticRegression/LogisticRegression_2024-12-23_14-52-35.joblib"
     }
 }
