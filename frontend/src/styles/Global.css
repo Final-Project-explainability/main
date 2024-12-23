@@ -1,0 +1,191 @@
+/* עיצוב בסיסי לדף Global */
+.global-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #eaf7f9; /* רקע תכלת */
+  font-family: Arial, sans-serif;
+}
+
+/* אזור התוכן הראשי */
+.main-content {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  gap: 20px;
+}
+
+/* תיבת Feature Metric */
+.feature-metric {
+  flex: 1;
+  background-color: #ffffff;
+  border: 2px solid #004d40;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.feature-metric h2 {
+  font-size: 24px;
+  color: #004d40;
+  margin-bottom: 10px;
+}
+
+.feature-metric p {
+  font-size: 16px;
+  color: #555;
+}
+
+/* מתג Agreement */
+.toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  font-size: 16px;
+  color: #004d40;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #4caf50;
+}
+
+input:checked + .slider:before {
+  transform: translateX(14px);
+}
+
+/* תיבת Graph Container */
+.graph-container {
+  flex: 2;
+  background-color: #ffffff;
+  border: 2px solid #004d40;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.graph-container h2 {
+  font-size: 24px;
+  color: #004d40;
+  margin-bottom: 10px;
+}
+
+.graph-container p {
+  font-size: 16px;
+  color: #555;
+}
+
+/* שורת כפתורי גרף */
+.graph-buttons-container {
+  display: flex;
+  justify-content: space-between; /* כפתורי גרפים משמאל, כפתור מסך מלא מימין */
+  align-items: center; /* יישור הכפתורים לגובה אחיד */
+  margin-bottom: 20px;
+}
+
+/* שורת כפתורי גרף */
+.graph-buttons-container {
+  display: flex;
+  justify-content: space-between; /* כפתורי גרפים משמאל, כפתור מסך מלא מימין */
+  align-items: center; /* יישור הכפתורים לגובה אחיד */
+  margin-bottom: 20px;
+}
+
+/* כפתורי גרפים */
+.graph-buttons {
+  display: flex;
+  gap: 10px; /* ריווח בין כפתורים */
+}
+
+.graph-button {
+  padding: 8px 16px;
+  border: 2px solid #004d40;
+  border-radius: 20px;
+  background-color: #e0f7fa;
+  color: #004d40;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.graph-button:hover {
+  background-color: #004d40;
+  color: #ffffff;
+  transform: scale(1.05); /* הגדלה עדינה */
+}
+
+.graph-button.active {
+  background-color: #004d40;
+  color: #ffffff;
+}
+
+/* כפתור Full Screen */
+.fullscreen-button {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* ריווח בין האייקון לטקסט */
+  padding: 8px 16px;
+  border: 2px solid #6c757d; /* גבול אפור כהה */
+  border-radius: 20px;
+  background-color: #e9ecef; /* רקע אפור בהיר */
+  color: #495057; /* טקסט אפור כהה */
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.fullscreen-button:hover {
+  background-color: #6c757d; /* רקע אפור כהה יותר בעת מעבר */
+  color: #ffffff; /* טקסט לבן */
+  transform: scale(1.05); /* הגדלה עדינה */
+}
+
+/* אייקון Full Screen */
+.fullscreen-icon {
+  width: 20px;
+  height: 20px;
+  fill: #495057; /* צבע אייקון אפור כהה */
+}
+
+.fullscreen-button:hover .fullscreen-icon {
+  fill: #ffffff; /* צבע אייקון משתנה ללבן בעת מעבר */
+}
