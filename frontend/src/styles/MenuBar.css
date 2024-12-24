@@ -1,0 +1,163 @@
+/* עיצוב תפריט עליון (MenuBar) */
+.menu-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #e0f7fa; /* רקע תכלת */
+  padding: 10px 30px;
+  color: #004d40; /* טקסט ירוק כהה */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* צל */
+  position: relative; /* לתפריט הנפתח */
+  z-index: 100;
+}
+
+/* כפתור הבית */
+.menu-icon {
+  font-size: 24px;
+  color: #004d40;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.menu-icon:hover {
+  transform: scale(1.2); /* הגדלה עדינה */
+  color: #00695c; /* שינוי צבע */
+}
+
+.icon-svg {
+  width: 32px; /* גודל האייקון */
+  height: 32px;
+}
+
+/* מרכז - שדה חיפוש */
+.menu-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.search-input {
+  padding: 10px 15px;
+  border-radius: 25px;
+  border: 2px solid #004d40;
+  font-size: 16px;
+  width: 350px;
+  transition: box-shadow 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  box-shadow: 0px 0px 8px rgba(0, 77, 64, 0.5);
+}
+
+.search-input::placeholder {
+  color: rgba(0, 77, 64, 0.5); /* צבע חצי שקוף */
+}
+
+/* לוגו חצי דהוי */
+.logo-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(0, 77, 64, 0.3); /* צבע חצי שקוף */
+  font-size: 28px;
+  font-weight: bold;
+  pointer-events: none;
+  z-index: -1; /* מתחת לשדה החיפוש */
+}
+
+/* צד ימין */
+.menu-right {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #004d40;
+  transition: transform 0.3s ease;
+}
+
+.user-menu:hover {
+  transform: scale(1.05); /* הגדלה עדינה */
+}
+
+/* תמונת משתמש */
+.user-avatar-menu {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #004d40;
+  background-image: url("https://t4.ftcdn.net/jpg/06/32/90/79/360_F_632907942_M6CVHD1ivhUrWK1X49PkBlSH3ooNPsog.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+/* תפריט נפתח */
+.user-dropdown {
+  position: absolute;
+  top: 60px;
+  right: 0;
+  background-color: #ffffff;
+  border: 1px solid #004d40;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.user-dropdown ul {
+  list-style: none;
+  padding: 10px;
+  margin: 0;
+}
+
+.user-dropdown li {
+  padding: 10px 15px;
+  font-size: 16px;
+  color: #004d40;
+  cursor: pointer;
+}
+
+.user-dropdown li:hover {
+  background-color: #e0f7fa;
+}
+
+/* אנימציה לתפריט */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* אייקון מימין ללוגו */
+.logo-icon {
+  position: absolute;
+  left: calc(34% + 100px); /* מיקום ליד הלוגו המרכזי */
+  transform: translateX(-50%);
+  width: 50px; /* גודל האייקון */
+  height: 50px;
+  opacity: 0.4; /* חצי דהוי */
+  /*background-image: url("/frontend/public/images/logo image.png");*/
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none; /* שלא יהיה ניתן ללחוץ עליו */
+  z-index: -1; /* מתחת לשדה החיפוש */
+}

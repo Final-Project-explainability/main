@@ -1,0 +1,58 @@
+/* עיצוב בסיסי לדף Local */
+.local-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f9f9f9; /* רקע בהיר */
+  font-family: Arial, sans-serif;
+}
+
+/* תוכן הדף */
+.local-content {
+  padding: 20px;
+  margin: 0 auto;
+  max-width: 1200px; /* הגבלת רוחב התוכן */
+  text-align: center;
+}
+
+.local-content h1 {
+  font-size: 32px;
+  color: #004d40; /* ירוק כהה */
+  margin-bottom: 10px;
+}
+
+.local-content p {
+  font-size: 18px;
+  color: #555555; /* אפור כהה */
+  margin-bottom: 30px;
+}
+
+/* קונטיינר הנתונים */
+.patient-data-container {
+  background-color: #ffffff;
+  border: 2px solid #004d40; /* גבול ירוק כהה */
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* צל עדין */
+}
+
+.patient-data-container h2 {
+  font-size: 24px;
+  color: #004d40; /* ירוק כהה */
+  margin-bottom: 10px;
+}
+
+.patient-data-container ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.patient-data-container li {
+  font-size: 16px;
+  color: #555555; /* אפור כהה */
+  margin: 5px 0;
+}
+
+.patient-data-container li strong {
+  color: #004d40; /* ירוק כהה */
+}
