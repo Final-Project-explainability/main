@@ -1,14 +1,18 @@
 import json
 import os
+
+import numpy as np
 import pandas as pd
+import scipy
 from matplotlib import pyplot as plt
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import GridSearchCV
 
 from explainability.src.Models.Model import Model
 
-
+from sklearn.tree import _tree
 class DecisionTreeModel(Model):
+
 
     def __init__(self):
         super().__init__()
@@ -70,7 +74,7 @@ class DecisionTreeModel(Model):
 
     def local_explain(self, X_train, X_instance, predicted_probability):
         """
-        Explains a prediction for a DecisionTreeClassifier by visualizing the decision path.
+        Explains a prediction for a DecisionTreeClassifier by analyzing feature contributions.
 
         Args:
             X_train: A pandas DataFrame representing the training data (for context).
@@ -78,25 +82,65 @@ class DecisionTreeModel(Model):
             predicted_probability: The predicted probability for the given instance.
 
         Returns:
-            None. Displays the decision path explanation.
+            None. Displays the feature contributions.
         """
         try:
-            # Ensure X_instance is a sparse matrix or convert it
-            if not isinstance(X_instance, (np.ndarray, scipy.sparse.spmatrix)):
-                X_instance = X_instance.to_numpy()
+            # Ensure X_instance is a 2D array with valid feature names
+            if hasattr(X_train, 'columns') and not hasattr(X_instance, 'columns'):
+                X_instance = X_train.iloc[[X_instance.name]]
+            elif not isinstance(X_instance, (np.ndarray, list)):
+                X_instance = X_instance.to_numpy().reshape(1, -1)
 
-            # Compute the decision path
-            decision_path = self.model.decision_path(X_instance)
-            print(f"Decision Path indices: {decision_path.indices}")
-            print(f"Decision Path indptr: {decision_path.indptr}")
+            # Access the decision tree structure
+            tree = self.model.tree_
 
-            # Visualization of the decision path (Placeholder for actual visualization logic)
-            plt.figure(figsize=(10, 6))
-            plt.title(f"Decision Path Visualization\nPredicted Probability: {predicted_probability:.4f}")
-            plt.xlabel("Node Index")
-            plt.ylabel("Decision Path Depth")
-            plt.plot(decision_path.indices, label="Decision Path", marker='o', linestyle='-')
-            plt.legend()
+            # Extract feature importances along the decision path
+            feature_contributions = np.zeros(X_train.shape[1])
+            node_indicator = self.model.decision_path(X_instance)
+            leaf_id = self.model.apply(X_instance)[0]
+
+            for node_index in node_indicator.indices:
+                if node_index == leaf_id:
+                    break
+                feature = tree.feature[node_index]
+                if feature != _tree.TREE_UNDEFINED:
+                    threshold = tree.threshold[node_index]
+                    value = X_instance.iloc[0, feature] if hasattr(X_instance, 'iloc') else X_instance[0, feature]
+                    contribution = (value - threshold) if value <= threshold else (threshold - value)
+                    feature_contributions[feature] += contribution
+
+            # Normalize contributions
+            total_contribution = np.sum(feature_contributions)
+            feature_contributions /= total_contribution
+
+            # Select top 10 features
+            top_features_indices = np.argsort(np.abs(feature_contributions))[-10:][::-1]
+            top_contributions = feature_contributions[top_features_indices]
+            top_feature_names = (
+                X_train.columns[top_features_indices]
+                if hasattr(X_train, 'columns') else [f'Feature {i}' for i in top_features_indices]
+            )
+
+            # Plot the contributions in a horizontal bar chart with values on bars
+            plt.figure(figsize=(12, 8))
+            colors = ['green' if contrib > 0 else 'red' for contrib in top_contributions]
+            bars = plt.barh(range(len(top_contributions)), top_contributions, color=colors, align='center')
+            plt.yticks(range(len(top_contributions)), top_feature_names)
+            plt.axvline(0, color='black', linewidth=0.8, linestyle='--')
+            plt.xlabel("Contribution to Decision")
+            plt.title(f"Top 10 Feature Contributions\nPredicted Probability: {predicted_probability:.4f}")
+
+            # Add text labels to each bar
+            for bar, contrib in zip(bars, top_contributions):
+                plt.text(
+                    bar.get_width() + (0.02 if contrib > 0 else -0.02),
+                    bar.get_y() + bar.get_height() / 2,
+                    f'{contrib:.3f}',
+                    va='center',
+                    ha='left' if contrib > 0 else 'right',
+                    color='black'
+                )
+
             plt.tight_layout()
             plt.show()
 
@@ -106,7 +150,46 @@ class DecisionTreeModel(Model):
         except Exception as e:
             print("An unexpected error occurred.")
             print(f"Details: {e}")
+
+    # def local_explain(self, X_train, X_instance, predicted_probability):
+    #     """
+    #     Explains a prediction for a DecisionTreeClassifier by visualizing the decision path.
     #
+    #     Args:
+    #         X_train: A pandas DataFrame representing the training data (for context).
+    #         X_instance: A pandas DataFrame row representing the instance to explain.
+    #         predicted_probability: The predicted probability for the given instance.
+    #
+    #     Returns:
+    #         None. Displays the decision path explanation.
+    #     """
+    #     try:
+    #         # Ensure X_instance is a sparse matrix or convert it
+    #         if not isinstance(X_instance, (np.ndarray, scipy.sparse.spmatrix)):
+    #             X_instance = X_instance.to_numpy()
+    #
+    #         # Compute the decision path
+    #         decision_path = self.model.decision_path(X_instance)
+    #         print(f"Decision Path indices: {decision_path.indices}")
+    #         print(f"Decision Path indptr: {decision_path.indptr}")
+    #
+    #         # Visualization of the decision path (Placeholder for actual visualization logic)
+    #         plt.figure(figsize=(10, 6))
+    #         plt.title(f"Decision Path Visualization\nPredicted Probability: {predicted_probability:.4f}")
+    #         plt.xlabel("Node Index")
+    #         plt.ylabel("Decision Path Depth")
+    #         plt.plot(decision_path.indices, label="Decision Path", marker='o', linestyle='-')
+    #         plt.legend()
+    #         plt.tight_layout()
+    #         plt.show()
+    #
+    #     except AttributeError as e:
+    #         print("Error: Ensure the model is a DecisionTreeClassifier or compatible model.")
+    #         print(f"Details: {e}")
+    #     except Exception as e:
+    #         print("An unexpected error occurred.")
+    #         print(f"Details: {e}")
+    #******************
     # def local_explain(self, X_train, X_instance, predicted_probability):
     #     """
     #         Explains a prediction for a DecisionTreeClassifier by visualizing the decision path.
