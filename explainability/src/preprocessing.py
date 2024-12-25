@@ -95,7 +95,6 @@ def feature_engineering(data):
 
     # Drop columns that are purely identifiers or irrelevant to modeling (e.g., patient or hospital IDs)
     data = data.drop(columns=['patient_id', 'encounter_id'], errors='ignore') #xgboost
-
     # # 1. Aggregated Features (Range of Vital Signs) # one tree
     # data['d1_diasbp_range'] = data['d1_diasbp_max'] - data['d1_diasbp_min']
     # data['d1_heartrate_range'] = data['d1_heartrate_max'] - data['d1_heartrate_min']
