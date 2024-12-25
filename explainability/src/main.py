@@ -6,7 +6,8 @@ from explainability.src.Models.LogisticRegressionModel import LogisticRegression
 from explainability.src.Models.XGBoostModel import XGBoostModel
 from preprocessing import preprocess_data, balance_data, feature_engineering, normalize_data
 from sklearn.model_selection import train_test_split
-
+import pandas as pd
+import os
 
 # # General function to train or load a model
 # def train_or_load_model(model_name, train_func, X_train, y_train, load_model=True):
@@ -91,6 +92,45 @@ from sklearn.model_selection import train_test_split
 #     # main(model_choice='tuned random')
 
 ######  new version
+def save_test_data(X_test, y_test, file_name=None, num_records=None):
+    """
+    Saves X_test and y_test into a separate file in the 'data' directory.
+
+    :param X_test: Features of the test dataset (DataFrame or numpy array).
+    :param y_test: Labels of the test dataset (Series, list, or numpy array).
+    :param file_name: Name of the file to save the data. If None, saves to 'data/test_data.csv'.
+    :param num_records: Number of records to save. If None, save all records (default: None).
+    """
+    # Ensure 'data' folder exists relative to the project root
+    data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
+    os.makedirs(data_dir, exist_ok=True)
+
+    # Set the default file name if not provided
+    if file_name is None:
+        file_name = os.path.join(data_dir, 'test_data.csv')
+    else:
+        file_name = os.path.join(data_dir, file_name)
+
+    # Convert X_test and y_test to DataFrame if needed
+    if not isinstance(X_test, pd.DataFrame):
+        X_test = pd.DataFrame(X_test)
+    if not isinstance(y_test, pd.Series):
+        y_test = pd.Series(y_test, name='target')
+
+    # Check if lengths match
+    if len(X_test) != len(y_test):
+        raise ValueError(f"X_test and y_test must have the same length. Got {len(X_test)} and {len(y_test)}.")
+
+    # Combine X_test and y_test into a single DataFrame
+    test_data = pd.concat([X_test, y_test], axis=1)
+
+    # Select the specified number of records
+    if num_records is not None:
+        test_data = test_data.iloc[:num_records]
+
+    # Save to file
+    test_data.to_csv(file_name, index=False, encoding='utf-8')
+    print(f"Test data saved to {file_name}, with {len(test_data)} records.")
 
 # General function to train or load a model
 def train_or_load_model(model_name, model_class, X_train, y_train, load_model=True):
@@ -221,7 +261,7 @@ def main():
     y = data['hospital_death']
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
+    save_test_data(X_test, y_test, 'example_test_data.csv', num_records=200)
     # Menu for model selection
     print("\nSelect a model to train and evaluate:")
     print("1. GradientBoostingClassifier")
