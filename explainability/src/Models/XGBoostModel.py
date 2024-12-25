@@ -112,8 +112,8 @@ class XGBoostModel(Model):
 
     def global_explain(self, X_train,y_train):
         # self.train_and_visualize_fbt(X_train = X_train, y_train=y_train, xgb_model= self)
-        self.global_explain_with_shap(X_train=X_train)
-
+        # self.global_explain_with_shap(X_train=X_train)
+        feature_importance = self.explain_with_inherent_feature_importance(X_train)
 
     def train_and_visualize_fbt(self,X_train,y_train, xgb_model, max_depth=5, min_forest_size=10,
                                 max_number_of_conjunctions=100, pruning_method='auc'):
@@ -352,3 +352,50 @@ class XGBoostModel(Model):
         plt.title("LIME Explanation - Feature Contributions")
         plt.tight_layout()
         plt.show()
+
+    def explain_with_inherent_feature_importance(self, X_train, save_to_file=True):
+        """
+        Explains the model using inherent feature importance as provided by XGBoost.
+        Generates a bar chart to visualize feature importance.
+
+        Args:
+            X_train: The training dataset used for feature importance extraction.
+            save_to_file: If True, saves the feature importance as a JSON file.
+
+        Returns:
+            feature_importance: Dictionary of features and their importance scores.
+        """
+        print("Calculating inherent feature importance...")
+
+        # Extract feature importance from the model
+        importance_types = ['gain', 'cover']  # Types of importance supported by XGBoost
+        feature_importance = {}
+
+        for imp_type in importance_types:
+            importance = self.model.get_booster().get_score(importance_type=imp_type)
+
+            # Store the raw importance scores in the feature_importance dictionary
+            feature_importance[imp_type] = importance
+
+            # If save_to_file is True, save the importance data to a JSON file
+            if save_to_file:
+                with open(f'{imp_type}_importance.json', 'w') as f:
+                    json.dump(importance, f, indent=4)
+
+        # Visualize feature importance for 'gain' as default
+        gain_importance = feature_importance['gain']
+        sorted_importance = sorted(gain_importance.items(), key=lambda x: x[1], reverse=True)
+
+        # Create a bar chart
+        features, scores = zip(*sorted_importance)
+        plt.figure(figsize=(10, 6))
+        plt.barh(features, scores, color='skyblue')
+        plt.xlabel('Importance')
+        plt.ylabel('Features')
+        plt.title('Feature Importance (Gain)')
+        plt.gca().invert_yaxis()  # Invert axis for descending order
+        plt.tight_layout()
+        plt.show()
+
+        print("Feature importance calculated and visualized.")
+        return feature_importance
