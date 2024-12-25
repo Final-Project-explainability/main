@@ -261,7 +261,7 @@ def main():
     y = data['hospital_death']
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    save_test_data(X_test, y_test, 'example_test_data.csv', num_records=200)
+    # save_test_data(X_test, y_test, 'example_test_data.csv', num_records=200)
     # Menu for model selection
     print("\nSelect a model to train and evaluate:")
     print("1. GradientBoostingClassifier")

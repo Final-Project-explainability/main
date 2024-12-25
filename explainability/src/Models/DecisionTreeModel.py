@@ -1,12 +1,15 @@
 import json
 import os
-
+import seaborn as sns
 import numpy as np
 import pandas as pd
 import scipy
 from matplotlib import pyplot as plt
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import GridSearchCV
+from sklearn.tree import export_graphviz
+from sklearn.tree import plot_tree
+import graphviz
 
 from explainability.src.Models.Model import Model
 
@@ -84,6 +87,9 @@ class DecisionTreeModel(Model):
         Returns:
             None. Displays the feature contributions.
         """
+
+        self.visualize_decision_tree(feature_names=X_train.columns)
+
         try:
             # Ensure X_instance is a 2D array with valid feature names
             if hasattr(X_train, 'columns') and not hasattr(X_instance, 'columns'):
@@ -151,7 +157,148 @@ class DecisionTreeModel(Model):
             print("An unexpected error occurred.")
             print(f"Details: {e}")
 
+        self.local_explain2(X_train=X_train, X_instance=X_instance, predicted_probability=predicted_probability)
 
+    def local_explain2(self, X_train, X_instance, predicted_probability):
+        X_instance = pd.DataFrame(X_instance, columns=X_train.columns)
+        # Get the decision path and leaf node
+        decision_path = self.model.decision_path(X_instance)
+        leaf_id = self.model.apply(X_instance)[0]
+
+        # Access the tree structure
+        tree = self.model.tree_
+        feature = tree.feature
+        threshold = tree.threshold
+        impurity = tree.impurity
+
+        # Initialize contributions dictionary
+        feature_contributions = {}
+
+        # Iterate over the decision path
+        node_indicator = decision_path.indices
+        for node_id in node_indicator[:-1]:  # Skip the last node (leaf)
+            # Get the feature and threshold for the current node
+            split_feature = feature[node_id]
+            if split_feature == -2:  # Skip if the node is not splitting on a feature
+                continue
+
+            split_threshold = threshold[node_id]
+            feature_name = X_train.columns[split_feature]
+
+            # Calculate the impurity decrease
+            left_child = tree.children_left[node_id]
+            right_child = tree.children_right[node_id]
+
+            # Determine which child the instance went to
+            if X_instance.iloc[0, split_feature] <= split_threshold:
+                child_node = left_child
+            else:
+                child_node = right_child
+
+            # Impurity decrease
+            impurity_decrease = impurity[node_id] - impurity[child_node]
+
+            # Accumulate contributions
+            if feature_name not in feature_contributions:
+                feature_contributions[feature_name] = 0
+            feature_contributions[feature_name] += impurity_decrease
+
+        # Normalize contributions to sum to the prediction probability
+        total_contribution = sum(feature_contributions.values())
+        normalized_contributions = {k: (v / total_contribution) * predicted_probability for k, v in
+                                    feature_contributions.items()}
+
+        # Create a DataFrame for better visualization
+        explanation_df = pd.DataFrame(list(normalized_contributions.items()), columns=["Feature", "Contribution"])
+        explanation_df["Absolute Contribution"] = explanation_df["Contribution"].abs()
+
+        # Sort by absolute contribution and select top 10 features
+        explanation_df = explanation_df.sort_values(by="Absolute Contribution", ascending=False)
+        top_10_features = explanation_df.head(10).sort_values(by="Contribution")
+
+        # Calculate the sum of the remaining features' contributions
+        other_features_contribution = explanation_df.iloc[10:]["Contribution"].sum()
+
+        # Add a row representing the sum of the other features
+        other_features_row = pd.DataFrame({
+            "Feature": ["Other Features Contribution"],
+            "Contribution": [other_features_contribution],
+            "Absolute Contribution": [np.abs(other_features_contribution)]
+        })
+
+        # Combine top 10 features and the other features' contribution into a single DataFrame
+        explanation_df = pd.concat([other_features_row, top_10_features], ignore_index=True)
+
+        # Create a horizontal bar chart to visualize positive and negative contributions
+        plt.figure(figsize=(10, 7))
+
+        # Set colors: blue for positive contributions, red for negative contributions
+        colors = ['#1f77b4' if x > 0 else '#d62728' for x in explanation_df["Contribution"]]
+
+        # Plot horizontal bars
+        plt.barh(explanation_df["Feature"], explanation_df["Contribution"], color=colors)
+
+        # Add a vertical line for the base value (expected value)
+        base_value = predicted_probability - sum(explanation_df["Contribution"])
+        plt.axvline(x=base_value, color='gray', linestyle='--', label=f"Base Value: {base_value:.4f}")
+
+        # Add a vertical line for the predicted probability
+        plt.axvline(x=predicted_probability, color='green', linestyle='-',
+                    label=f"Predicted Probability: {predicted_probability:.4f}")
+
+        # Add labels, title, and legend
+        plt.xlabel("Contribution to Prediction")
+        plt.title("Feature Contributions Using Decision Tree")
+        plt.legend()
+
+        # Annotate each bar with its contribution value
+        for i, v in enumerate(explanation_df["Contribution"]):
+            plt.text(v, i, f"{v:.2f}", va='center', ha='left' if v > 0 else 'right', color='black')
+
+        # Adjust layout for better display
+        plt.tight_layout()
+        plt.show()
+
+        return explanation_df
+
+    def visualize_decision_tree(self, feature_names, class_names=None, save_as_png=False):
+        """
+        Visualize a Decision Tree using Graphviz or Matplotlib.
+
+        Args:
+            model: Trained DecisionTreeClassifier model.
+            feature_names: List of feature names.
+            class_names: List of class names (optional).
+            save_as_png: If True, save the tree as a PNG file.
+        """
+        # Using sklearn's built-in plot_tree (Matplotlib)
+        plt.figure(figsize=(20, 10))
+        plot_tree(
+            self.model,
+            feature_names=feature_names,
+            class_names=class_names,
+            filled=True,
+            rounded=True,
+            fontsize=10
+        )
+        plt.title("Decision Tree Visualization")
+        plt.show()
+
+        # Optionally save the tree as PNG using Graphviz
+        if save_as_png:
+            dot_data = export_graphviz(
+                self.model,
+                out_file=None,
+                feature_names=feature_names,
+                class_names=class_names,
+                filled=True,
+                rounded=True,
+                special_characters=True
+            )
+            graph = graphviz.Source(dot_data)
+            graph.format = "png"
+            graph.render("decision_tree")
+            print("Decision Tree saved as 'decision_tree.png'")
 
     def global_explain(self, X_train, y_train):
         """
@@ -187,8 +334,8 @@ class DecisionTreeModel(Model):
             for _, row in feature_importances.iterrows()
         }
 
-        with open("decision_tree_feature_importance.json", "w") as f:
-            json.dump(feature_importance_dict, f, indent=4)
+        # with open("decision_tree_feature_importance.json", "w") as f:
+        #     json.dump(feature_importance_dict, f, indent=4)
 
         print("Feature importance saved to 'decision_tree_feature_importance.json'.")
 

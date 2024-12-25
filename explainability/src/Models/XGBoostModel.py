@@ -249,54 +249,55 @@ class XGBoostModel(Model):
             "Absolute Contribution": np.abs(shap_values_class_1[0])
         })
 
-        # Sort features by absolute contribution to highlight the most impactful ones
-        feature_contributions = feature_contributions.sort_values(by="Absolute Contribution", ascending=False)
-
-        # Select the top 10 most important features
-        top_10_features = feature_contributions.head(10)
-        top_10_features = top_10_features.sort_values(by="Absolute Contribution")
-
-        # Calculate the sum of the remaining features' contributions
-        other_features_contribution = feature_contributions.iloc[10:]["Contribution"].sum()
-
-        # Add a row representing the sum of the other features
-        other_features_row = pd.DataFrame({
-            "Feature": ["Other Features Contribution"],
-            "Contribution": [other_features_contribution],
-            "Absolute Contribution": [np.abs(other_features_contribution)]
-        })
-
-        # Combine top 10 features and the other features' contribution into a single DataFrame
-        explanation_df = pd.concat([other_features_row, top_10_features], ignore_index=True)
-
-        # Create a horizontal bar chart to visualize positive and negative contributions
-        plt.figure(figsize=(10, 7))
-
-        # Set colors: blue for positive contributions, red for negative contributions
-        colors = ['#1f77b4' if x < 0 else '#d62728' for x in explanation_df["Contribution"]]
-
-        # Plot horizontal bars
-        plt.barh(explanation_df["Feature"], explanation_df["Contribution"], color=colors)
-
-        # Add a vertical line for the base value (expected value)
-        plt.axvline(x=base_value, color='gray', linestyle='--', label=f"Base Value: {base_value:.4f}")
-
-        # Add a vertical line for the predicted probability
-        plt.axvline(x=predicted_probability, color='green', linestyle='-',
-                    label=f"Predicted Probability: {predicted_probability:.4f}")
-
-        # Add labels, title, and legend
-        plt.xlabel("Contribution to Prediction")
-        plt.title("Feature Contributions Using SHAP")
-        plt.legend()
-
-        # Annotate each bar with its contribution value
-        for i, v in enumerate(explanation_df["Contribution"]):
-            plt.text(v, i, f"{v:.2f}", va='center', ha='left' if v > 0 else 'right', color='black')
-
-        # Adjust layout for better display
-        plt.tight_layout()
-        plt.show()
+        # # Sort features by absolute contribution to highlight the most impactful ones
+        # feature_contributions = feature_contributions.sort_values(by="Absolute Contribution", ascending=False)
+        #
+        # # Select the top 10 most important features
+        # top_10_features = feature_contributions.head(10)
+        # top_10_features = top_10_features.sort_values(by="Absolute Contribution")
+        #
+        # # Calculate the sum of the remaining features' contributions
+        # other_features_contribution = feature_contributions.iloc[10:]["Contribution"].sum()
+        #
+        # # Add a row representing the sum of the other features
+        # other_features_row = pd.DataFrame({
+        #     "Feature": ["Other Features Contribution"],
+        #     "Contribution": [other_features_contribution],
+        #     "Absolute Contribution": [np.abs(other_features_contribution)]
+        # })
+        #
+        # # Combine top 10 features and the other features' contribution into a single DataFrame
+        # explanation_df = pd.concat([other_features_row, top_10_features], ignore_index=True)
+        #
+        # # Create a horizontal bar chart to visualize positive and negative contributions
+        # plt.figure(figsize=(10, 7))
+        #
+        # # Set colors: blue for positive contributions, red for negative contributions
+        # colors = ['#1f77b4' if x < 0 else '#d62728' for x in explanation_df["Contribution"]]
+        #
+        # # Plot horizontal bars
+        # plt.barh(explanation_df["Feature"], explanation_df["Contribution"], color=colors)
+        #
+        # # Add a vertical line for the base value (expected value)
+        # plt.axvline(x=base_value, color='gray', linestyle='--', label=f"Base Value: {base_value:.4f}")
+        #
+        # # Add a vertical line for the predicted probability
+        # plt.axvline(x=predicted_probability, color='green', linestyle='-',
+        #             label=f"Predicted Probability: {predicted_probability:.4f}")
+        #
+        # # Add labels, title, and legend
+        # plt.xlabel("Contribution to Prediction")
+        # plt.title("Feature Contributions Using SHAP")
+        # plt.legend()
+        #
+        # # Annotate each bar with its contribution value
+        # for i, v in enumerate(explanation_df["Contribution"]):
+        #     plt.text(v, i, f"{v:.2f}", va='center', ha='left' if v > 0 else 'right', color='black')
+        #
+        # # Adjust layout for better display
+        # plt.tight_layout()
+        # plt.show()
+        return feature_contributions
 
     def explain_with_lime(self, X_train, X_instance, save_html_path=None):
         """
