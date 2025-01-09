@@ -120,10 +120,17 @@ class XGBoostModel(Model):
         # self.train_and_visualize_fbt(X_train = X_train, y_train=y_train, xgb_model= self)
         # self.global_explain_with_shap(X_train=X_train)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         feature_importance = self.explain_with_inherent_feature_importance(X_train)
 =======
         # best_params, results_df = tune_lime_parameters(self.model, X_train, num_samples=500)
         pass
+=======
+        # best_params, results_df = tune_lime_parameters(self.model, X_train, num_samples=500)
+        pass
+
+
+>>>>>>> Stashed changes
 
 
 
@@ -375,6 +382,7 @@ class XGBoostModel(Model):
         plt.show()
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     def explain_with_inherent_feature_importance(self, X_train, save_to_file=True):
         """
         Explains the model using inherent feature importance as provided by XGBoost.
@@ -422,6 +430,8 @@ class XGBoostModel(Model):
         print("Feature importance calculated and visualized.")
         return feature_importance
 =======
+=======
+>>>>>>> Stashed changes
         # Extract the intercept and explanation list
         explanation_list = explanation.as_list()
         intercept = explanation.intercept[1]  # הטיה עבור המחלקה 'Death'
@@ -564,5 +574,9 @@ def tune_lime_parameters(model, X_train, num_samples=500):
 
     # Find the best parameters
     best_params = results_df.loc[results_df['avg_r2'].idxmax()]['params']
+<<<<<<< Updated upstream
+    return best_params, results_df
+>>>>>>> Stashed changes
+=======
     return best_params, results_df
 >>>>>>> Stashed changes
