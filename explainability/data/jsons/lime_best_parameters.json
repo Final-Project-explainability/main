@@ -1,0 +1,6 @@
+{
+  "discretize_continuous": False,
+  "kernel_width": 5,
+  "num_features": 30,
+  "num_samples": 1000
+}

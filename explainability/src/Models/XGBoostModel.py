@@ -2,6 +2,7 @@ import json
 import os
 import tempfile
 import webbrowser
+from lime.lime_tabular import LimeTabularExplainer
 import lime
 import lime.lime_tabular
 import optuna
@@ -10,9 +11,14 @@ import xgboost as xgb
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split, cross_val_score
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+
 from explainability.src.ModelManager import ModelManager
 from explainability.src.Models.Model import Model
 import pandas as pd
+
+from sklearn.model_selection import ParameterGrid
+import random
 
 
 class XGBoostModel(Model):
@@ -113,7 +119,15 @@ class XGBoostModel(Model):
     def global_explain(self, X_train,y_train):
         # self.train_and_visualize_fbt(X_train = X_train, y_train=y_train, xgb_model= self)
         # self.global_explain_with_shap(X_train=X_train)
+<<<<<<< Updated upstream
         feature_importance = self.explain_with_inherent_feature_importance(X_train)
+=======
+        # best_params, results_df = tune_lime_parameters(self.model, X_train, num_samples=500)
+        pass
+
+
+
+>>>>>>> Stashed changes
 
     def train_and_visualize_fbt(self,X_train,y_train, xgb_model, max_depth=5, min_forest_size=10,
                                 max_number_of_conjunctions=100, pruning_method='auc'):
@@ -249,54 +263,54 @@ class XGBoostModel(Model):
             "Absolute Contribution": np.abs(shap_values_class_1[0])
         })
 
-        # # Sort features by absolute contribution to highlight the most impactful ones
-        # feature_contributions = feature_contributions.sort_values(by="Absolute Contribution", ascending=False)
-        #
-        # # Select the top 10 most important features
-        # top_10_features = feature_contributions.head(10)
-        # top_10_features = top_10_features.sort_values(by="Absolute Contribution")
-        #
-        # # Calculate the sum of the remaining features' contributions
-        # other_features_contribution = feature_contributions.iloc[10:]["Contribution"].sum()
-        #
-        # # Add a row representing the sum of the other features
-        # other_features_row = pd.DataFrame({
-        #     "Feature": ["Other Features Contribution"],
-        #     "Contribution": [other_features_contribution],
-        #     "Absolute Contribution": [np.abs(other_features_contribution)]
-        # })
-        #
-        # # Combine top 10 features and the other features' contribution into a single DataFrame
-        # explanation_df = pd.concat([other_features_row, top_10_features], ignore_index=True)
-        #
-        # # Create a horizontal bar chart to visualize positive and negative contributions
-        # plt.figure(figsize=(10, 7))
-        #
-        # # Set colors: blue for positive contributions, red for negative contributions
-        # colors = ['#1f77b4' if x < 0 else '#d62728' for x in explanation_df["Contribution"]]
-        #
-        # # Plot horizontal bars
-        # plt.barh(explanation_df["Feature"], explanation_df["Contribution"], color=colors)
-        #
-        # # Add a vertical line for the base value (expected value)
-        # plt.axvline(x=base_value, color='gray', linestyle='--', label=f"Base Value: {base_value:.4f}")
-        #
-        # # Add a vertical line for the predicted probability
-        # plt.axvline(x=predicted_probability, color='green', linestyle='-',
-        #             label=f"Predicted Probability: {predicted_probability:.4f}")
-        #
-        # # Add labels, title, and legend
-        # plt.xlabel("Contribution to Prediction")
-        # plt.title("Feature Contributions Using SHAP")
-        # plt.legend()
-        #
-        # # Annotate each bar with its contribution value
-        # for i, v in enumerate(explanation_df["Contribution"]):
-        #     plt.text(v, i, f"{v:.2f}", va='center', ha='left' if v > 0 else 'right', color='black')
-        #
-        # # Adjust layout for better display
-        # plt.tight_layout()
-        # plt.show()
+        # Sort features by absolute contribution to highlight the most impactful ones
+        feature_contributions = feature_contributions.sort_values(by="Absolute Contribution", ascending=False)
+
+        # Select the top 10 most important features
+        top_10_features = feature_contributions.head(10)
+        top_10_features = top_10_features.sort_values(by="Absolute Contribution")
+
+        # Calculate the sum of the remaining features' contributions
+        other_features_contribution = feature_contributions.iloc[10:]["Contribution"].sum()
+
+        # Add a row representing the sum of the other features
+        other_features_row = pd.DataFrame({
+            "Feature": ["Other Features Contribution"],
+            "Contribution": [other_features_contribution],
+            "Absolute Contribution": [np.abs(other_features_contribution)]
+        })
+
+        # Combine top 10 features and the other features' contribution into a single DataFrame
+        explanation_df = pd.concat([other_features_row, top_10_features], ignore_index=True)
+
+        # Create a horizontal bar chart to visualize positive and negative contributions
+        plt.figure(figsize=(10, 7))
+
+        # Set colors: blue for positive contributions, red for negative contributions
+        colors = ['#1f77b4' if x < 0 else '#d62728' for x in explanation_df["Contribution"]]
+
+        # Plot horizontal bars
+        plt.barh(explanation_df["Feature"], explanation_df["Contribution"], color=colors)
+
+        # Add a vertical line for the base value (expected value)
+        plt.axvline(x=base_value, color='gray', linestyle='--', label=f"Base Value: {base_value:.4f}")
+
+        # Add a vertical line for the predicted probability
+        plt.axvline(x=predicted_probability, color='green', linestyle='-',
+                    label=f"Predicted Probability: {predicted_probability:.4f}")
+
+        # Add labels, title, and legend
+        plt.xlabel("Contribution to Prediction")
+        plt.title("Feature Contributions Using SHAP")
+        plt.legend()
+
+        # Annotate each bar with its contribution value
+        for i, v in enumerate(explanation_df["Contribution"]):
+            plt.text(v, i, f"{v:.2f}", va='center', ha='left' if v > 0 else 'right', color='black')
+
+        # Adjust layout for better display
+        plt.tight_layout()
+        plt.show()
         return feature_contributions
 
     def explain_with_lime(self, X_train, X_instance, save_html_path=None):
@@ -308,31 +322,38 @@ class XGBoostModel(Model):
             model: The trained model (e.g., XGBoost or LightGBM).
             X_train: A pandas DataFrame representing the training data.
             X_instance: A pandas DataFrame row representing the instance to explain.
-            save_image_path: Optional path to save the explanation figure as an image.
             save_html_path: Optional path to save the explanation as an HTML file.
 
         Returns:
-            None. Saves and displays both HTML and image explanations.
+            explanation_list: List of feature contributions (weights).
         """
         # Set default class names
         class_names = ['Survive', 'Death']
 
+        # Normalize the training data and the instance using MinMaxScaler
+        # scaler = MinMaxScaler()
+        # X_train_normalized = scaler.fit_transform(X_train)
+        # X_instance_normalized = scaler.transform(X_instance)
+
         # Prepare the feature names
         feature_names = X_train.columns.tolist()
 
-        # Create LIME explainer
+        # Create LIME explainer with normalized data
         explainer = lime.lime_tabular.LimeTabularExplainer(
-            training_data=X_train.values,  # Training data
+            training_data=X_train.values,  # training data for LIME
             feature_names=feature_names,  # Feature names
             class_names=class_names,  # Class names for the output
             mode='classification',  # Model type
-            discretize_continuous=True  # Discretize continuous features
+            discretize_continuous=False,  # Discretize continuous features
+            kernel_width=5
         )
 
-        # Explain the single instance
+        # Explain the single instance (normalized)
         explanation = explainer.explain_instance(
-            X_instance.values[0],  # Instance to explain
-            self.model.predict_proba  # Prediction function
+            X_instance.values[0],  # instance to explain
+            self.model.predict_proba,  # Prediction function
+            num_samples=1000,
+            num_features=183  # להציג את כל הפיצ'רים
         )
 
         # Save explanation as HTML (always)
@@ -353,6 +374,7 @@ class XGBoostModel(Model):
         plt.tight_layout()
         plt.show()
 
+<<<<<<< Updated upstream
     def explain_with_inherent_feature_importance(self, X_train, save_to_file=True):
         """
         Explains the model using inherent feature importance as provided by XGBoost.
@@ -399,3 +421,148 @@ class XGBoostModel(Model):
 
         print("Feature importance calculated and visualized.")
         return feature_importance
+=======
+        # Extract the intercept and explanation list
+        explanation_list = explanation.as_list()
+        intercept = explanation.intercept[1]  # הטיה עבור המחלקה 'Death'
+        weights_sum = sum([w[1] for w in explanation_list])  # סכום התרומות של התכונות
+        predicted_value = intercept + weights_sum  # חישוב החיזוי לפי המודל המקומי
+
+        print(f"Intercept: {intercept}")
+        print(f"Sum of weights: {weights_sum}")
+        print(f"Predicted value: {predicted_value}")
+        return explanation_list
+
+    def global_explanations_with_lime(self, X_train):
+        """
+        Aggregate LIME explanations for the entire dataset to create a global summary.
+        Save feature importance in a sorted JSON file and visualize the top 20 features.
+
+        Args:
+            model: Trained model to explain.
+            X_train_sample: Training dataset.
+            y_train: Training labels.
+        Returns:
+            aggregated_importance: A DataFrame with feature importance aggregated across all samples.
+        """
+        X_train_sample = X_train.sample(frac=0.02, random_state=42)
+
+        # Initialize the LIME explainer
+        explainer = LimeTabularExplainer(
+            X_train_sample.values,
+            feature_names=X_train_sample.columns,
+            class_names=['alive', 'dead'],
+            verbose=True,
+            mode='classification'
+        )
+
+        # Initialize a dictionary to store cumulative importance for each unique feature
+        cumulative_importance = {}
+
+        # Run LIME for all samples in the dataset
+        print("Running LIME on 2% of the dataset...")
+        for i in range(X_train_sample.shape[0]):
+            exp = explainer.explain_instance(X_train_sample.iloc[i].values, self.model.predict_proba,
+                                             num_features=len(X_train_sample.columns))
+            explanation_list = exp.as_list()
+
+            # Accumulate the importance values
+            for feature, importance in explanation_list:
+                if feature not in cumulative_importance:
+                    cumulative_importance[feature] = 0
+                cumulative_importance[feature] += abs(importance)  # Accumulate absolute importance
+
+        # Normalize the importance values to percentages
+        total_importance = sum(cumulative_importance.values())
+        importance_percentages = {feature: (importance / total_importance) * 100 for feature, importance in
+                                  cumulative_importance.items()}
+
+        # Sort features by importance in descending order
+        sorted_importance = dict(sorted(importance_percentages.items(), key=lambda item: item[1], reverse=True))
+
+        # Save the sorted importance values to a JSON file in SHAP-like format
+        with open("lime_feature_importance.json", "w") as f:
+            json.dump(sorted_importance, f, indent=4)
+        print("Feature importance saved to 'lime_feature_importance.json'.")
+
+        # Convert sorted importance to a DataFrame
+        importance_df = pd.DataFrame(list(sorted_importance.items()), columns=['Feature', 'Importance (%)'])
+
+        # Select the top 20 features for visualization
+        top_20_features = importance_df.head(20)
+
+        # Plot the top 20 features
+        plt.figure(figsize=(8, 9.5))  # Adjust size as needed
+        plt.barh(top_20_features['Feature'][::-1], top_20_features['Importance (%)'][::-1], color='skyblue')
+        plt.xlabel('Importance (%)')
+        plt.title('Top 20 Features by LIME')
+        plt.tight_layout()  # Ensures labels fit properly
+        plt.show()
+
+        return sorted_importance
+
+
+def tune_lime_parameters(model, X_train, num_samples=500):
+    """
+    Perform parameter tuning for LIME on a subset of the data to maximize R².
+
+    Args:
+        model: Trained XGBoost model.
+        X_train: Training data as a pandas DataFrame.
+        num_samples: Number of samples to evaluate in the experiment.
+
+    Returns:
+        best_params: Dictionary of the best parameters.
+        results: DataFrame of all parameter combinations and their R² averages.
+    """
+    # Subset of the data
+    random_indices = random.sample(range(len(X_train)), num_samples)
+    X_subset = X_train.iloc[random_indices]
+
+    # Define parameter grid
+    param_grid = {
+        'kernel_width': [3, 5, 10],
+        'num_samples': [1000, 5000, 10000],
+        'num_features': [10, 20, 30],
+        'discretize_continuous': [True, False],
+    }
+    grid = list(ParameterGrid(param_grid))
+
+    # Initialize results storage
+    results = []
+
+    for params in grid:
+        r2_scores = []
+
+        # Set up LIME explainer with current parameters
+        explainer = LimeTabularExplainer(
+            training_data=X_train.values,
+            feature_names=X_train.columns.tolist(),
+            class_names=['Survive', 'Death'],
+            mode='classification',
+            kernel_width=params['kernel_width'],
+            discretize_continuous=params['discretize_continuous']
+        )
+
+        # Iterate over the subset of data
+        for idx, row in X_subset.iterrows():
+            explanation = explainer.explain_instance(
+                data_row=row.values,
+                predict_fn=model.predict_proba,
+                num_features=params['num_features'],
+                num_samples=params['num_samples']
+            )
+            # Collect R² score
+            r2_scores.append(explanation.score)
+
+        # Store results for this parameter combination
+        avg_r2 = np.mean(r2_scores)
+        results.append({'params': params, 'avg_r2': avg_r2})
+
+    # Convert results to DataFrame
+    results_df = pd.DataFrame(results)
+
+    # Find the best parameters
+    best_params = results_df.loc[results_df['avg_r2'].idxmax()]['params']
+    return best_params, results_df
+>>>>>>> Stashed changes
