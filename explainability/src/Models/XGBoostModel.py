@@ -27,6 +27,9 @@ class XGBoostModel(Model):
         super().__init__()
         self.model = xgb.XGBClassifier(objective='binary:logistic', eval_metric='logloss', random_state=42)
 
+    def backend_inherent(self, X_instance):
+        pass
+
     def train(self, X_train, y_train, tune_hyperparameter=False):
         """
             Train an XGBoost model with optional hyperparameter tuning, feature selection, and long-run optimization.

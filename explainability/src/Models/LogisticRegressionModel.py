@@ -12,6 +12,9 @@ class LogisticRegressionModel(Model):
     def __init__(self):
         super().__init__()
 
+    def backend_inherent(self, X_instance):
+        pass
+
     def train(self, X_train, y_train):
         model = LogisticRegression(class_weight='balanced', max_iter=1000)
         model.fit(X_train, y_train)

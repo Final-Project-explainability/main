@@ -21,6 +21,9 @@ class DecisionTreeModel(Model):
     def __init__(self):
         super().__init__()
 
+    def backend_inherent(self, X_instance):
+        pass
+
     def train(self, X_train, y_train):
         """
             Train a single Decision Tree classifier with hyperparameter tuning and save the best parameters.
