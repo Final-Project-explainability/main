@@ -1,8 +1,12 @@
-
+from lime.lime_tabular import LimeTabularExplainer
+import lime
+import lime.lime_tabular
 import datetime
 from abc import ABC, abstractmethod
 from datetime import datetime
 import matplotlib.pyplot as plt
+import pandas as pd
+import shap
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -19,6 +23,79 @@ class Model(ABC):
         self.model = None
         self.name = None
 
+    def backend_local_shap(self, X_instance):
+        """
+                Explains a prediction using SHAP for complex models like XGBoost, LightGBM, and Random Forest.
+                Displays the 10 most important features and the sum of the remaining features in descending order of importance.
+
+                Args:
+                    model: The trained model.
+                    X_instance: A pandas DataFrame row representing the instance to explain.
+                    predicted_probability: The predicted probability from the model.
+
+                Returns:
+                    None. Displays the SHAP explanation.
+                """
+        # Create a SHAP explainer object
+        explainer = shap.TreeExplainer(self.model)
+        shap_values = explainer.shap_values(X_instance)
+
+        # Extract SHAP values for class 1 (assuming binary classification)
+        shap_values_class_1 = shap_values[1] if isinstance(shap_values, list) else shap_values
+
+        # Combine feature names and SHAP values into a DataFrame
+        feature_contributions = pd.DataFrame({
+            "Feature": X_instance.columns,
+            "Contribution": shap_values_class_1[0],
+            "Absolute Contribution": np.abs(shap_values_class_1[0])
+        })
+
+        # Sort features by absolute contribution to highlight the most impactful ones
+        feature_contributions = feature_contributions.sort_values(by="Absolute Contribution", ascending=False)
+
+        return feature_contributions
+
+    def backend_local_lime(self, X_train, X_instance):
+        """
+        Explains a prediction for an XGBoost or LGBM model using LIME.
+        Always saves and displays the explanation as an HTML file and an image (bar plot).
+
+        Args:
+            model: The trained model (e.g., XGBoost or LightGBM).
+            X_train: A pandas DataFrame representing the training data.
+            X_instance: A pandas DataFrame row representing the instance to explain.
+
+        Returns:
+            explanation_list: List of feature contributions (weights).
+        """
+        # Set default class names
+        class_names = ['Survive', 'Death']
+
+        # Prepare the feature names
+        feature_names = X_train.columns.tolist()
+
+        # Create LIME explainer with normalized data
+        explainer = lime.lime_tabular.LimeTabularExplainer(
+            training_data=X_train.values,  # training data for LIME
+            feature_names=feature_names,  # Feature names
+            class_names=class_names,  # Class names for the output
+            mode='classification',  # Model type
+            discretize_continuous=False,  # Discretize continuous features
+            kernel_width=5
+        )
+
+        # Explain the single instance (normalized)
+        explanation = explainer.explain_instance(
+            X_instance.values[0],  # instance to explain
+            self.model.predict_proba,  # Prediction function
+            num_samples=1000,
+            num_features=183  # להציג את כל הפיצ'רים
+        )
+
+        # Extract the intercept and explanation list
+        explanation_list = explanation.as_list()
+
+        return explanation_list
 
     @abstractmethod
     def train(self, X_train, y_train):
