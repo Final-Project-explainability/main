@@ -97,4 +97,4 @@ for i in range(len(X_sample)):
         individual_data = X_sample_for_prediction.iloc[[i]]
         model.backend_local_shap(individual_data)
         model.backend_local_lime(X_sample_for_prediction, individual_data)
-        mo
+        model.backend_inherent(individual_data)

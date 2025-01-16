@@ -72,21 +72,22 @@ class Model(ABC):
 
         # Sort features by absolute contribution to highlight the most impactful ones
         feature_contributions = feature_contributions.sort_values(by="Absolute Contribution", ascending=False)
+        feature_contributions = feature_contributions.drop(columns=['Absolute Contribution'])
 
         return feature_contributions
 
+
     def backend_local_lime(self, X_train, X_instance):
         """
-        Explains a prediction for an XGBoost or LGBM model using LIME.
+        Explains a prediction for a model using LIME.
         Always saves and displays the explanation as an HTML file and an image (bar plot).
 
         Args:
-            model: The trained model (e.g., XGBoost or LightGBM).
             X_train: A pandas DataFrame representing the training data.
             X_instance: A pandas DataFrame row representing the instance to explain.
 
         Returns:
-            explanation_list: List of feature contributions (weights).
+            explanation_df: DataFrame of feature contributions (weights).
         """
         # Set default class names
         class_names = ['Survive', 'Death']
@@ -109,13 +110,23 @@ class Model(ABC):
             X_instance.values[0],  # instance to explain
             self.model.predict_proba,  # Prediction function
             num_samples=1000,
-            num_features=183  # להציג את כל הפיצ'רים
+            num_features=183  # Show all features
         )
 
-        # Extract the intercept and explanation list
+        # Extract the explanation as a list
         explanation_list = explanation.as_list()
 
-        return explanation_list
+        # Convert the explanation list to a DataFrame
+        explanation_df = pd.DataFrame(explanation_list, columns=['Feature', 'Contribution'])
+
+        # Add a column for absolute contribution
+        explanation_df['Absolute Contribution'] = explanation_df['Contribution'].abs()
+
+        # Sort the DataFrame by absolute contribution
+        explanation_df = explanation_df.sort_values(by='Absolute Contribution', ascending=False)
+        # Remove the 'Absolute Contribution' column
+        explanation_df = explanation_df.drop(columns=['Absolute Contribution'])
+        return explanation_df
 
     @abstractmethod
     def train(self, X_train, y_train):
