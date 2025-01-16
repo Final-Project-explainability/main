@@ -1,10 +1,10 @@
 import pandas as pd
+import shap
 from sklearn.preprocessing import StandardScaler
 from data_loader import load_data
 from explainability.src.ModelManager import ModelManager
 from preprocessing import preprocess_data, feature_engineering
 from sklearn.model_selection import train_test_split
-
 
 # Load the data
 file_path = "example_test_data.csv"
@@ -82,8 +82,10 @@ def get_model_data():
 
     return X_train, X_test, y_train, y_test
 
+# print(logisticRegressionModel.predict_proba(individual_data=normalized_X.iloc[[0]]))
+
 X_train, X_test, y_train, y_test = get_model_data()
-models = [xgboostModel, logisticRegressionModel, decisionTreeModel]
+models = [logisticRegressionModel, decisionTreeModel, xgboostModel]
 
 for i in range(len(X_sample)):
     for model in models:
@@ -95,8 +97,4 @@ for i in range(len(X_sample)):
         individual_data = X_sample_for_prediction.iloc[[i]]
         model.backend_local_shap(individual_data)
         model.backend_local_lime(X_sample_for_prediction, individual_data)
-
-
-
-
-
+        mo

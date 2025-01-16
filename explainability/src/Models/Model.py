@@ -7,6 +7,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
 import shap
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -16,6 +17,8 @@ from sklearn.metrics import (
     roc_curve,
 )
 import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+import xgboost as xgb
 
 
 class Model(ABC):
@@ -23,31 +26,48 @@ class Model(ABC):
         self.model = None
         self.name = None
 
+    @abstractmethod
+    def backend_inherent(self, X_instance):
+        pass
+
     def backend_local_shap(self, X_instance):
         """
-                Explains a prediction using SHAP for complex models like XGBoost, LightGBM, and Random Forest.
-                Displays the 10 most important features and the sum of the remaining features in descending order of importance.
+        Explains a prediction using SHAP for different model types.
+        Displays the 10 most important features and the sum of the remaining features in descending order of importance.
 
-                Args:
-                    model: The trained model.
-                    X_instance: A pandas DataFrame row representing the instance to explain.
-                    predicted_probability: The predicted probability from the model.
+        Args:
+            X_instance: A pandas DataFrame row representing the instance to explain.
 
-                Returns:
-                    None. Displays the SHAP explanation.
-                """
-        # Create a SHAP explainer object
-        explainer = shap.TreeExplainer(self.model)
+        Returns:
+            feature_contributions: DataFrame with features, their SHAP contributions, and absolute contributions.
+        """
+        # Select the appropriate SHAP explainer based on the model type
+        if isinstance(self.model, xgb.XGBClassifier):
+            explainer = shap.TreeExplainer(self.model)
+        elif isinstance(self.model, DecisionTreeClassifier):
+            explainer = shap.TreeExplainer(self.model)
+        elif isinstance(self.model, LogisticRegression):
+            explainer = shap.KernelExplainer(self.model.predict_proba, X_instance)
+        else:
+            raise ValueError(f"Model type {self.name} is not supported for SHAP explanation.")
+
+        # Compute SHAP values
         shap_values = explainer.shap_values(X_instance)
 
-        # Extract SHAP values for class 1 (assuming binary classification)
-        shap_values_class_1 = shap_values[1] if isinstance(shap_values, list) else shap_values
+        # Handle 3D arrays (e.g., for multiclass classification)
+        if shap_values.ndim == 3:
+            # Extract the contributions for the desired class (e.g., class 1)
+            shap_values_class_1 = shap_values[0, :, 1]  # Assuming you want class 1 contributions
+        elif isinstance(shap_values, list):
+            shap_values_class_1 = shap_values[1]
+        else:
+            shap_values_class_1 = shap_values
 
         # Combine feature names and SHAP values into a DataFrame
         feature_contributions = pd.DataFrame({
             "Feature": X_instance.columns,
-            "Contribution": shap_values_class_1[0],
-            "Absolute Contribution": np.abs(shap_values_class_1[0])
+            "Contribution": shap_values_class_1,
+            "Absolute Contribution": np.abs(shap_values_class_1)
         })
 
         # Sort features by absolute contribution to highlight the most impactful ones
