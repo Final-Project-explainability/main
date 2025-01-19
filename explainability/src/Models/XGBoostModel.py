@@ -28,7 +28,38 @@ class XGBoostModel(Model):
         self.model = xgb.XGBClassifier(objective='binary:logistic', eval_metric='logloss', random_state=42)
 
     def backend_inherent(self, X_instance):
-        pass
+        """
+        Calculate the contribution of each feature for a single instance prediction
+        in an XGBoost model using the inherent Gain metric.
+
+        Parameters:
+            X_instance (DataFrame): The single instance to analyze, shape (1, n_features).
+
+        Returns:
+            DataFrame: A DataFrame with feature names and their Gain contributions.
+        """
+        # Ensure the model is trained
+        if not self.model.get_booster():
+            raise ValueError("The model must be trained before calling this method.")
+
+        # Get feature names
+        feature_names = X_instance.columns
+
+        # Get feature importances based on Gain
+        booster = self.model.get_booster()
+        gain_importances = booster.get_score(importance_type='gain')
+
+        # Normalize gain importances
+        total_gain = sum(gain_importances.values())
+        normalized_gain = {feature_names[int(k[1:])]: v / total_gain for k, v in gain_importances.items()}
+
+        # Create DataFrame for contributions
+        contributions_df = pd.DataFrame({
+            'Feature': list(normalized_gain.keys()),
+            'Contribution': list(normalized_gain.values())
+        }).sort_values(by='Contribution', ascending=False).reset_index(drop=True)
+
+        return contributions_df
 
     def train(self, X_train, y_train, tune_hyperparameter=False):
         """

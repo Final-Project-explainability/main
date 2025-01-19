@@ -91,10 +91,19 @@ for i in range(len(X_sample)):
     for model in models:
         if model.get_type() == "XGBClassifier":
             X_sample_for_prediction = X_sample
+            X_train_for_prediction = X_train
         else:
             X_sample_for_prediction = normalized_X
+            X_train_for_prediction = normalize_data(X_train)
 
         individual_data = X_sample_for_prediction.iloc[[i]]
-        model.backend_local_shap(individual_data)
-        model.backend_local_lime(X_sample_for_prediction, individual_data)
+
         model.backend_inherent(individual_data)
+
+        if model.get_type() == "LogisticRegression":
+            xgboostModel.backend_local_shap(individual_data)
+        else:
+            model.backend_local_shap(individual_data)
+
+        model.backend_local_lime(X_train_for_prediction, individual_data)
+

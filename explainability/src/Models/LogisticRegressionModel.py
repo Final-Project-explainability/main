@@ -13,7 +13,41 @@ class LogisticRegressionModel(Model):
         super().__init__()
 
     def backend_inherent(self, X_instance):
-        pass
+        """
+        Calculate the contribution of each feature for a single instance prediction
+        in a logistic regression model considering the non-linearity of the sigmoid function.
+
+        Parameters:
+            X_instance (DataFrame): The single instance to analyze, shape (1, n_features).
+
+        Returns:
+            DataFrame: A DataFrame with feature names and their contributions.
+        """
+        feature_names = X_instance.columns
+
+        # Extract coefficients and intercept
+        coefficients = self.model.coef_[0]
+        intercept = self.model.intercept_[0]
+
+        # Calculate the linear combination
+        linear_combination = np.dot(coefficients, X_instance.iloc[0]) + intercept
+
+        # Calculate the probability (sigmoid function)
+        probability = 1 / (1 + np.exp(-linear_combination))
+
+        # Derivative of the sigmoid function (gradient)
+        sigmoid_gradient = probability * (1 - probability)
+
+        # Adjust contributions to reflect non-linearity
+        adjusted_contributions = coefficients * X_instance.iloc[0] * sigmoid_gradient
+
+        # Create DataFrame for contributions
+        contributions_df = pd.DataFrame({
+            'Feature': feature_names,
+            'Contribution': adjusted_contributions
+        }).sort_values(by='Contribution', ascending=False).reset_index(drop=True)
+
+        return contributions_df
 
     def train(self, X_train, y_train):
         model = LogisticRegression(class_weight='balanced', max_iter=1000)

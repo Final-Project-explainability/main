@@ -13,16 +13,60 @@ import graphviz
 from graphviz import Digraph, Source
 
 from explainability.src.Models.Model import Model
-
 from sklearn.tree import _tree
+
 class DecisionTreeModel(Model):
-
-
     def __init__(self):
         super().__init__()
 
     def backend_inherent(self, X_instance):
-        pass
+        """
+        Calculate the contribution of each feature for a single instance prediction
+        using the path through the decision tree.
+
+        Parameters:
+            X_instance (array-like): The single instance to analyze, shape (1, n_features).
+
+        Returns:
+            DataFrame: A DataFrame with feature names and their contributions.
+        """
+        tree = self.model.tree_  # Access the trained tree
+        feature_names = X_instance.columns
+        feature_importances = {name: 0 for name in feature_names}  # Initialize contributions
+
+        # Traverse the tree
+        node = 0  # Start at the root node
+        while tree.feature[node] != _tree.TREE_UNDEFINED:
+            feature_index = tree.feature[node]
+            threshold = tree.threshold[node]
+
+            # Calculate contribution for the current feature
+            parent_impurity = tree.impurity[node]
+            left_child = tree.children_left[node]
+            right_child = tree.children_right[node]
+
+            if X_instance[0, feature_index] <= threshold:
+                child_node = left_child
+            else:
+                child_node = right_child
+
+            child_impurity = tree.impurity[child_node]
+            n_samples_parent = tree.n_node_samples[node]
+            n_samples_child = tree.n_node_samples[child_node]
+
+            # Contribution is the impurity reduction weighted by the proportion of samples
+            contribution = (parent_impurity - child_impurity) * (n_samples_child / n_samples_parent)
+            feature_importances[feature_names[feature_index]] += contribution
+
+            # Move to the child node
+            node = child_node
+
+        # Convert to DataFrame
+        contributions_df = pd.DataFrame(
+            list(feature_importances.items()), columns=['Feature', 'Contribution']
+        ).sort_values(by='Contribution', ascending=False).reset_index(drop=True)
+
+        return contributions_df
 
     def train(self, X_train, y_train):
         """

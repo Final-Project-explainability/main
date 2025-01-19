@@ -19,6 +19,7 @@ from sklearn.metrics import (
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 import xgboost as xgb
+from explainability.src.ModelManager import ModelManager
 
 
 class Model(ABC):
@@ -46,8 +47,10 @@ class Model(ABC):
             explainer = shap.TreeExplainer(self.model)
         elif isinstance(self.model, DecisionTreeClassifier):
             explainer = shap.TreeExplainer(self.model)
-        elif isinstance(self.model, LogisticRegression):
-            explainer = shap.KernelExplainer(self.model.predict_proba, X_instance)
+        # elif isinstance(self.model, LogisticRegression):
+        #     # explainer = shap.KernelExplainer(self.model.predict_proba, X_instance)
+        #     xgboostModel = ModelManager.load_model("XGBClassifier")
+        #     return xgboostModel.backend_local_shap(xgboostModel)
         else:
             raise ValueError(f"Model type {self.name} is not supported for SHAP explanation.")
 
