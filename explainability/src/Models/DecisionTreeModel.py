@@ -25,7 +25,7 @@ class DecisionTreeModel(Model):
         using the path through the decision tree.
 
         Parameters:
-            X_instance (array-like): The single instance to analyze, shape (1, n_features).
+            X_instance (DataFrame): The single instance to analyze, shape (1, n_features).
 
         Returns:
             DataFrame: A DataFrame with feature names and their contributions.
@@ -33,6 +33,9 @@ class DecisionTreeModel(Model):
         tree = self.model.tree_  # Access the trained tree
         feature_names = X_instance.columns
         feature_importances = {name: 0 for name in feature_names}  # Initialize contributions
+
+        # Convert X_instance to a numpy array for efficient indexing
+        instance_values = X_instance.iloc[0].values
 
         # Traverse the tree
         node = 0  # Start at the root node
@@ -45,7 +48,7 @@ class DecisionTreeModel(Model):
             left_child = tree.children_left[node]
             right_child = tree.children_right[node]
 
-            if X_instance[0, feature_index] <= threshold:
+            if instance_values[feature_index] <= threshold:
                 child_node = left_child
             else:
                 child_node = right_child
@@ -565,6 +568,9 @@ class DecisionTreeModel(Model):
 
         return feature_importances
 
+    def backend_get_name(self):
+        return "DecisionTree"
+
 
 from sklearn.inspection import permutation_importance
 
@@ -608,3 +614,4 @@ def compute_permutation_importance_train(model, X_train, y_train, output_csv="fe
     print(f"Feature importances saved to {output_json}")
 
     return importance_df
+

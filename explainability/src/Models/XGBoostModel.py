@@ -42,16 +42,15 @@ class XGBoostModel(Model):
         if not self.model.get_booster():
             raise ValueError("The model must be trained before calling this method.")
 
-        # Get feature names
-        feature_names = X_instance.columns
-
         # Get feature importances based on Gain
         booster = self.model.get_booster()
         gain_importances = booster.get_score(importance_type='gain')
 
         # Normalize gain importances
         total_gain = sum(gain_importances.values())
-        normalized_gain = {feature_names[int(k[1:])]: v / total_gain for k, v in gain_importances.items()}
+        normalized_gain = {}
+        for feature in gain_importances:
+            normalized_gain[feature] = gain_importances[feature] / total_gain
 
         # Create DataFrame for contributions
         contributions_df = pd.DataFrame({
@@ -483,6 +482,9 @@ class XGBoostModel(Model):
 
         return sorted_importance
 
+    def backend_get_name(self):
+        return "XGBOOST"
+
 
 def tune_lime_parameters(model, X_train, num_samples=500):
     """
@@ -547,3 +549,6 @@ def tune_lime_parameters(model, X_train, num_samples=500):
     # Find the best parameters
     best_params = results_df.loc[results_df['avg_r2'].idxmax()]['params']
     return best_params, results_df
+
+
+

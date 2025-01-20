@@ -19,7 +19,6 @@ from sklearn.metrics import (
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 import xgboost as xgb
-from explainability.src.ModelManager import ModelManager
 
 
 class Model(ABC):
@@ -43,16 +42,7 @@ class Model(ABC):
             feature_contributions: DataFrame with features, their SHAP contributions, and absolute contributions.
         """
         # Select the appropriate SHAP explainer based on the model type
-        if isinstance(self.model, xgb.XGBClassifier):
-            explainer = shap.TreeExplainer(self.model)
-        elif isinstance(self.model, DecisionTreeClassifier):
-            explainer = shap.TreeExplainer(self.model)
-        # elif isinstance(self.model, LogisticRegression):
-        #     # explainer = shap.KernelExplainer(self.model.predict_proba, X_instance)
-        #     xgboostModel = ModelManager.load_model("XGBClassifier")
-        #     return xgboostModel.backend_local_shap(xgboostModel)
-        else:
-            raise ValueError(f"Model type {self.name} is not supported for SHAP explanation.")
+        explainer = shap.TreeExplainer(self.model)
 
         # Compute SHAP values
         shap_values = explainer.shap_values(X_instance)
@@ -64,7 +54,7 @@ class Model(ABC):
         elif isinstance(shap_values, list):
             shap_values_class_1 = shap_values[1]
         else:
-            shap_values_class_1 = shap_values
+            shap_values_class_1 = shap_values[0]
 
         # Combine feature names and SHAP values into a DataFrame
         feature_contributions = pd.DataFrame({
@@ -156,6 +146,10 @@ class Model(ABC):
 
     def get_type(self):
         return type(self.model).__name__
+
+    @abstractmethod
+    def backend_get_name(self):
+        pass
 
     def predict_proba(self, individual_data):
         return self.model.predict_proba(individual_data)

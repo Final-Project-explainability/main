@@ -179,3 +179,6 @@ class LogisticRegressionModel(Model):
         plt.show()
 
         return coef_df
+
+    def backend_get_name(self):
+        return "LogisticRegression"

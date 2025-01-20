@@ -1,10 +1,12 @@
+import numpy as np
 import pandas as pd
-import shap
 from sklearn.preprocessing import StandardScaler
 from data_loader import load_data
 from explainability.src.ModelManager import ModelManager
 from preprocessing import preprocess_data, feature_engineering
 from sklearn.model_selection import train_test_split
+import json
+import os
 
 # Load the data
 file_path = "example_test_data.csv"
@@ -45,19 +47,24 @@ def normalize_data(X):
 normalized_X = normalize_data(X_sample)
 
 
-# # Prepare an empty DataFrame to store results
-# results = pd.DataFrame()
-# results['patient_id'] = ids
+def normalize_contributions(df):
+    """
+    Normalize the contributions in a DataFrame so their sum equals 100%.
 
-# # Predict probabilities for each model
-# results['DecisionTree_Pred'] = [decisionTreeModel.predict_proba(normalized_X.iloc[[i]])[:, 1][0] for i in range(len(X))]
-# results['LogisticRegression_Pred'] = [logisticRegressionModel.predict_proba(normalized_X.iloc[[i]])[:, 1][0] for i in range(len(X))]
-# results['XGBoost_Pred'] = [xgboostModel.predict_proba(X.iloc[[i]])[:, 1][0] for i in range(len(X))]
+    Args:
+        df (DataFrame): DataFrame with a 'Contribution' column.
 
-# # Save results to a CSV file
-# output_file = "model_predictions.csv"
-# results.to_csv(output_file, index=False)
-# print(f"Predictions saved to {output_file}")
+    Returns:
+        DataFrame: Normalized DataFrame.
+    """
+    total_contribution = np.abs(df['Contribution']).sum()
+    if total_contribution != 0:
+        df['Normalized Contribution'] = (df['Contribution'] / total_contribution) * 100
+    else:
+        df['Normalized Contribution'] = 0
+    df = df.drop(columns=['Contribution'])
+    return df
+
 
 def get_model_data():
     """
@@ -82,14 +89,36 @@ def get_model_data():
 
     return X_train, X_test, y_train, y_test
 
-# print(logisticRegressionModel.predict_proba(individual_data=normalized_X.iloc[[0]]))
 
 X_train, X_test, y_train, y_test = get_model_data()
-models = [logisticRegressionModel, decisionTreeModel, xgboostModel]
+models = [decisionTreeModel, xgboostModel, logisticRegressionModel]
 
+# Directory to save JSON files
+output_dir = "patient_contributions"
+os.makedirs(output_dir, exist_ok=True)
+
+
+# Function to structure the output like the mock example
+def format_model_output(model_name, shap_data, lime_data, inherent_data):
+    return {
+        model_name: {
+            "SHAP": {row["Feature"]: row["Normalized Contribution"] for row in shap_data},
+            "Lime": {row["Feature"]: row["Normalized Contribution"] for row in lime_data},
+            "Inherent": {row["Feature"]: row["Normalized Contribution"] for row in inherent_data},
+        }
+    }
+
+
+# Loop through each patient and generate structured JSON
 for i in range(len(X_sample)):
+    individual_id = ids.iloc[i]
+    json_output = {}
+
     for model in models:
-        if model.get_type() == "XGBClassifier":
+        model_name = model.backend_get_name()
+
+        # Select appropriate data for normalization
+        if model_name == "XGBOOST":
             X_sample_for_prediction = X_sample
             X_train_for_prediction = X_train
         else:
@@ -98,12 +127,33 @@ for i in range(len(X_sample)):
 
         individual_data = X_sample_for_prediction.iloc[[i]]
 
-        model.backend_inherent(individual_data)
-
+        # Generate contributions
+        inherent_df = model.backend_inherent(individual_data)
+        # Get backend_local_shap contributions
         if model.get_type() == "LogisticRegression":
-            xgboostModel.backend_local_shap(individual_data)
+            shap_df = decisionTreeModel.backend_local_shap(individual_data)
         else:
-            model.backend_local_shap(individual_data)
+            shap_df = model.backend_local_shap(individual_data)
+        lime_df = model.backend_local_lime(X_train_for_prediction, individual_data)
 
-        model.backend_local_lime(X_train_for_prediction, individual_data)
+        # Normalize contributions
+        inherent_df = normalize_contributions(inherent_df)
+        shap_df = normalize_contributions(shap_df)
+        lime_df = normalize_contributions(lime_df)
 
+        # Format output
+        formatted_output = format_model_output(
+            model_name,
+            shap_data=shap_df.to_dict(orient="records"),
+            lime_data=lime_df.to_dict(orient="records"),
+            inherent_data=inherent_df.to_dict(orient="records"),
+        )
+
+        json_output.update(formatted_output)
+
+    # Save the JSON for the patient
+    output_file = os.path.join(output_dir, f"patient_{individual_id}_explanation.json")
+    with open(output_file, "w") as f:
+        json.dump(json_output, f, indent=4)
+
+    print(f"Contributions saved to {output_file}")
