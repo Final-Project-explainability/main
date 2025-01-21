@@ -30,7 +30,7 @@ class Model(ABC):
     def backend_inherent(self, X_instance):
         pass
 
-    def backend_local_shap(self, X_instance):
+    def backend_local_shap(self, X_instance, X_train):
         """
         Explains a prediction using SHAP for different model types.
         Displays the 10 most important features and the sum of the remaining features in descending order of importance.
@@ -41,8 +41,14 @@ class Model(ABC):
         Returns:
             feature_contributions: DataFrame with features, their SHAP contributions, and absolute contributions.
         """
+
+        print("logistic regression predict proba: ", self.model.predict_proba(X_instance))
         # Select the appropriate SHAP explainer based on the model type
-        explainer = shap.TreeExplainer(self.model)
+        if hasattr(self.model, "coef_"):  # Assuming a logistic regression model
+            explainer = shap.KernelExplainer(self.model.predict_proba, X_instance)
+        # Select the appropriate SHAP explainer based on the model type
+        else:
+            explainer = shap.TreeExplainer(self.model)
 
         # Compute SHAP values
         shap_values = explainer.shap_values(X_instance)

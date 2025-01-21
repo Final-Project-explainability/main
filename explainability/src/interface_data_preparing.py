@@ -44,7 +44,7 @@ def normalize_data(X):
     return pd.DataFrame(X_normalized, columns=X.columns)
 
 
-normalized_X = normalize_data(X_sample)
+normalized_X_sample = normalize_data(X_sample)
 
 
 def normalize_contributions(df):
@@ -91,7 +91,7 @@ def get_model_data():
 
 
 X_train, X_test, y_train, y_test = get_model_data()
-models = [decisionTreeModel, xgboostModel, logisticRegressionModel]
+models = [logisticRegressionModel, decisionTreeModel, xgboostModel]
 
 # Directory to save JSON files
 output_dir = "patient_contributions"
@@ -109,6 +109,8 @@ def format_model_output(model_name, shap_data, lime_data, inherent_data):
     }
 
 
+X_train_normalized = normalize_data(X_train)
+
 # Loop through each patient and generate structured JSON
 for i in range(len(X_sample)):
     individual_id = ids.iloc[i]
@@ -122,18 +124,17 @@ for i in range(len(X_sample)):
             X_sample_for_prediction = X_sample
             X_train_for_prediction = X_train
         else:
-            X_sample_for_prediction = normalized_X
-            X_train_for_prediction = normalize_data(X_train)
+            X_sample_for_prediction = normalized_X_sample
+            X_train_for_prediction = X_train_normalized
 
         individual_data = X_sample_for_prediction.iloc[[i]]
 
         # Generate contributions
         inherent_df = model.backend_inherent(individual_data)
         # Get backend_local_shap contributions
-        if model.get_type() == "LogisticRegression":
-            shap_df = decisionTreeModel.backend_local_shap(individual_data)
-        else:
-            shap_df = model.backend_local_shap(individual_data)
+        # if model.get_type() == "LogisticRegression":
+        #     shap_df = decisionTreeModel.backend_local_shap(individual_data)
+        shap_df = model.backend_local_shap(individual_data, X_train_for_prediction)
         lime_df = model.backend_local_lime(X_train_for_prediction, individual_data)
 
         # Normalize contributions
