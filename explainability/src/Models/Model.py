@@ -42,10 +42,9 @@ class Model(ABC):
             feature_contributions: DataFrame with features, their SHAP contributions, and absolute contributions.
         """
 
-        print("logistic regression predict proba: ", self.model.predict_proba(X_instance))
         # Select the appropriate SHAP explainer based on the model type
         if hasattr(self.model, "coef_"):  # Assuming a logistic regression model
-            explainer = shap.KernelExplainer(self.model.predict_proba, X_instance)
+            explainer = shap.Explainer(self.model, X_train, feature_names=X_instance.columns)
         # Select the appropriate SHAP explainer based on the model type
         else:
             explainer = shap.TreeExplainer(self.model)
