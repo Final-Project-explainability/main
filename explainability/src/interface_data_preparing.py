@@ -23,6 +23,8 @@ decisionTreeModel = ModelManager.load_model("DecisionTreeClassifier")
 logisticRegressionModel = ModelManager.load_model("LogisticRegression")
 xgboostModel = ModelManager.load_model("XGBClassifier")
 
+# Initialize the StandardScaler
+scaler = StandardScaler()
 
 def normalize_data(X):
     """
@@ -34,17 +36,12 @@ def normalize_data(X):
     Returns:
         X_normalized: The normalized training set (pandas DataFrame).
     """
-    # Initialize the StandardScaler
-    scaler = StandardScaler()
 
     # Fit the scaler to the training data and transform the train set
     X_normalized = scaler.fit_transform(X)
 
     # Return as DataFrame with the same column names
     return pd.DataFrame(X_normalized, columns=X.columns)
-
-
-normalized_X_sample = normalize_data(X_sample)
 
 
 def normalize_contributions(df):
@@ -110,6 +107,7 @@ def format_model_output(model_name, shap_data, lime_data, inherent_data):
 
 
 X_train_normalized = normalize_data(X_train)
+normalized_X_sample = normalize_data(X_sample)
 
 # Loop through each patient and generate structured JSON
 for i in range(len(X_sample)):
@@ -135,7 +133,7 @@ for i in range(len(X_sample)):
         # if model.get_type() == "LogisticRegression":
         #     shap_df = decisionTreeModel.backend_local_shap(individual_data)
         shap_df = model.backend_local_shap(individual_data, X_train_for_prediction)
-        lime_df = model.backend_local_lime(X_train_for_prediction, individual_data)
+        lime_df = model.backend_local_lime(X_train_unscaled=X_train, X_instance_unscaled=X_sample.iloc[[i]], scaler=scaler)
 
         # Normalize contributions
         inherent_df = normalize_contributions(inherent_df)

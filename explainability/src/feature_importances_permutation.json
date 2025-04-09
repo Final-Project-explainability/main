@@ -1,0 +1,917 @@
+[
+    {
+        "Feature":"ventilated_apache",
+        "Mean Importance":0.0966863098,
+        "Std Importance":0.0011172477
+    },
+    {
+        "Feature":"apache_3j_diagnosis",
+        "Mean Importance":0.0374324563,
+        "Std Importance":0.0010541398
+    },
+    {
+        "Feature":"d1_bun_min",
+        "Mean Importance":0.0284373703,
+        "Std Importance":0.0010362589
+    },
+    {
+        "Feature":"d1_sysbp_noninvasive_min",
+        "Mean Importance":0.0169189449,
+        "Std Importance":0.0008753046
+    },
+    {
+        "Feature":"d1_lactate_min",
+        "Mean Importance":0.0144263894,
+        "Std Importance":0.0003146094
+    },
+    {
+        "Feature":"d1_sysbp_min",
+        "Mean Importance":0.0138838662,
+        "Std Importance":0.0007733366
+    },
+    {
+        "Feature":"gcs_motor_apache",
+        "Mean Importance":0.007133658,
+        "Std Importance":0.0002321651
+    },
+    {
+        "Feature":"d1_resprate_max",
+        "Mean Importance":0.0060645557,
+        "Std Importance":0.0008560659
+    },
+    {
+        "Feature":"d1_lactate_max",
+        "Mean Importance":0.0051209528,
+        "Std Importance":0.0002332372
+    },
+    {
+        "Feature":"bun_apache",
+        "Mean Importance":0.0047728613,
+        "Std Importance":0.0002878814
+    },
+    {
+        "Feature":"gcs_eyes_apache",
+        "Mean Importance":0.0047255976,
+        "Std Importance":0.0004019695
+    },
+    {
+        "Feature":"d1_heartrate_min",
+        "Mean Importance":0.0027358728,
+        "Std Importance":0.0001761341
+    },
+    {
+        "Feature":"d1_pao2fio2ratio_max",
+        "Mean Importance":0.0026880729,
+        "Std Importance":0.000257477
+    },
+    {
+        "Feature":"icu_id",
+        "Mean Importance":0.0021133129,
+        "Std Importance":0.0004393177
+    },
+    {
+        "Feature":"apache_2_diagnosis",
+        "Mean Importance":0.0017093495,
+        "Std Importance":0.0001546721
+    },
+    {
+        "Feature":"d1_temp_min",
+        "Mean Importance":0.0011497168,
+        "Std Importance":0.0000477068
+    },
+    {
+        "Feature":"age",
+        "Mean Importance":0.0009436914,
+        "Std Importance":0.0000934504
+    },
+    {
+        "Feature":"d1_mbp_noninvasive_min",
+        "Mean Importance":0.000771501,
+        "Std Importance":0.0001081223
+    },
+    {
+        "Feature":"d1_hco3_max",
+        "Mean Importance":0.0002552191,
+        "Std Importance":0.0000367388
+    },
+    {
+        "Feature":"d1_arterial_ph_max",
+        "Mean Importance":0.000017342,
+        "Std Importance":0.0000010778
+    },
+    {
+        "Feature":"d1_glucose_max",
+        "Mean Importance":0.0000017552,
+        "Std Importance":0.0000003344
+    },
+    {
+        "Feature":"ethnicity",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"elective_surgery",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"creatinine_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"bilirubin_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"arf_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"apache_post_operative",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"gcs_verbal_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"glucose_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"fio2_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"gcs_unable_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"intubated_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"map_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"paco2_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"paco2_for_ph_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"pao2_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"ph_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"heart_rate_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"hematocrit_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"sodium_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"resprate_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"urineoutput_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"temp_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"height",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"gender",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"icu_admit_source",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"icu_stay_type",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"weight",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"readmission_status",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"pre_icu_los_days",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"albumin_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"icu_type",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"hospital_admit_source",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"hospital_id",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"bmi",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_mbp_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_mbp_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_mbp_invasive_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_mbp_invasive_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_heartrate_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_diasbp_noninvasive_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_diasbp_noninvasive_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_diasbp_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"wbc_apache",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_diasbp_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_diasbp_invasive_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_diasbp_invasive_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_sysbp_invasive_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_spo2_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_spo2_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_sysbp_invasive_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_diasbp_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_diasbp_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_diasbp_noninvasive_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_diasbp_noninvasive_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_heartrate_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_heartrate_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_mbp_invasive_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_mbp_invasive_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_mbp_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_mbp_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_mbp_noninvasive_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_sysbp_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_sysbp_noninvasive_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_temp_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_mbp_noninvasive_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_resprate_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_spo2_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_spo2_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_resprate_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_resprate_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_mbp_noninvasive_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_sysbp_invasive_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_sysbp_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_sysbp_invasive_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_temp_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_albumin_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_bilirubin_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_albumin_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_sysbp_noninvasive_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_sysbp_noninvasive_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_temp_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_sysbp_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_calcium_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_calcium_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_bun_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_bilirubin_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_glucose_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_hco3_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_creatinine_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_creatinine_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_hemaglobin_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_hemaglobin_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_hematocrit_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_hematocrit_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_inr_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_inr_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_diasbp_invasive_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_diasbp_invasive_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_platelets_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_platelets_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_potassium_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_potassium_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_wbc_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_wbc_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_sodium_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_sodium_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_bilirubin_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_bilirubin_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_bun_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_bun_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_calcium_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_calcium_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_albumin_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_albumin_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_glucose_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_glucose_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_hco3_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_hco3_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_hemaglobin_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_hemaglobin_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_hematocrit_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_hematocrit_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_inr_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_inr_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_lactate_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_lactate_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_platelets_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_platelets_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_creatinine_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_creatinine_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_potassium_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_potassium_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_wbc_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_sodium_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_wbc_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_arterial_pco2_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_arterial_pco2_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_sodium_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_arterial_ph_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_arterial_po2_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_arterial_po2_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"d1_pao2fio2ratio_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_arterial_pco2_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_arterial_pco2_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_arterial_ph_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_arterial_ph_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_arterial_po2_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_arterial_po2_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_pao2fio2ratio_max",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"h1_pao2fio2ratio_min",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"aids",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"cirrhosis",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"diabetes_mellitus",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"hepatic_failure",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"immunosuppression",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"leukemia",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"lymphoma",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"solid_tumor_with_metastasis",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"apache_3j_bodysystem",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"apache_2_bodysystem",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"renal_function_triad_flag",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    },
+    {
+        "Feature":"mods_pentad_flag",
+        "Mean Importance":0.0,
+        "Std Importance":0.0
+    }
+]

@@ -19,55 +19,115 @@ class DecisionTreeModel(Model):
     def __init__(self):
         super().__init__()
 
+    # def backend_inherent(self, X_instance):
+    #     """
+    #     Calculate the contribution of each feature for a single instance prediction
+    #     using the path through the decision tree.
+    #
+    #     Parameters:
+    #         X_instance (DataFrame): The single instance to analyze, shape (1, n_features).
+    #
+    #     Returns:
+    #         DataFrame: A DataFrame with feature names and their contributions.
+    #     """
+    #     tree = self.model.tree_  # Access the trained tree
+    #     feature_names = X_instance.columns
+    #     feature_importances = {name: 0 for name in feature_names}  # Initialize contributions
+    #
+    #     # Convert X_instance to a numpy array for efficient indexing
+    #     instance_values = X_instance.iloc[0].values
+    #
+    #     # Traverse the tree
+    #     node = 0  # Start at the root node
+    #     while tree.feature[node] != _tree.TREE_UNDEFINED:
+    #         feature_index = tree.feature[node]
+    #         threshold = tree.threshold[node]
+    #
+    #         # Calculate contribution for the current feature
+    #         parent_impurity = tree.impurity[node]
+    #         left_child = tree.children_left[node]
+    #         right_child = tree.children_right[node]
+    #
+    #         if instance_values[feature_index] <= threshold:
+    #             child_node = left_child
+    #         else:
+    #             child_node = right_child
+    #
+    #         child_impurity = tree.impurity[child_node]
+    #         n_samples_parent = tree.n_node_samples[node]
+    #         n_samples_child = tree.n_node_samples[child_node]
+    #
+    #         # Contribution is the impurity reduction weighted by the proportion of samples
+    #         contribution = (parent_impurity - child_impurity) * (n_samples_child / n_samples_parent)
+    #         feature_importances[feature_names[feature_index]] += contribution
+    #
+    #         # Move to the child node
+    #         node = child_node
+    #
+    #     # Convert to DataFrame
+    #     contributions_df = pd.DataFrame(
+    #         list(feature_importances.items()), columns=['Feature', 'Contribution']
+    #     ).sort_values(by='Contribution', ascending=False).reset_index(drop=True)
+    #
+    #     return contributions_df
+
     def backend_inherent(self, X_instance):
         """
         Calculate the contribution of each feature for a single instance prediction
-        using the path through the decision tree.
+        using the path through the decision tree, including direction of effect
+        (positive = increases risk of death, negative = decreases).
 
         Parameters:
             X_instance (DataFrame): The single instance to analyze, shape (1, n_features).
 
         Returns:
-            DataFrame: A DataFrame with feature names and their contributions.
+            DataFrame: A DataFrame with feature names, signed importance scores.
         """
-        tree = self.model.tree_  # Access the trained tree
+        tree = self.model.tree_
         feature_names = X_instance.columns
-        feature_importances = {name: 0 for name in feature_names}  # Initialize contributions
-
-        # Convert X_instance to a numpy array for efficient indexing
+        feature_contributions = {name: 0 for name in feature_names}
         instance_values = X_instance.iloc[0].values
 
-        # Traverse the tree
-        node = 0  # Start at the root node
+        node = 0  # Start from root
         while tree.feature[node] != _tree.TREE_UNDEFINED:
             feature_index = tree.feature[node]
+            feature_name = feature_names[feature_index]
             threshold = tree.threshold[node]
 
-            # Calculate contribution for the current feature
-            parent_impurity = tree.impurity[node]
+            # Children nodes
             left_child = tree.children_left[node]
             right_child = tree.children_right[node]
 
+            # Decide direction based on instance value
             if instance_values[feature_index] <= threshold:
                 child_node = left_child
             else:
                 child_node = right_child
 
+            # Calculate impurity reduction
+            parent_impurity = tree.impurity[node]
             child_impurity = tree.impurity[child_node]
             n_samples_parent = tree.n_node_samples[node]
             n_samples_child = tree.n_node_samples[child_node]
 
-            # Contribution is the impurity reduction weighted by the proportion of samples
-            contribution = (parent_impurity - child_impurity) * (n_samples_child / n_samples_parent)
-            feature_importances[feature_names[feature_index]] += contribution
+            importance = abs(parent_impurity - child_impurity) * (n_samples_child / n_samples_parent)
 
-            # Move to the child node
-            node = child_node
+            # --- Determine direction (sign) ---
+            parent_prob = tree.value[node][0][1] / tree.value[node][0].sum()
+            child_prob = tree.value[child_node][0][1] / tree.value[child_node][0].sum()
+
+            if child_prob > parent_prob:
+                signed_contribution = importance  # more likely to die
+            else:
+                signed_contribution = -importance  # less likely to die
+
+            feature_contributions[feature_name] += signed_contribution
+            node = child_node  # Continue down the tree
 
         # Convert to DataFrame
         contributions_df = pd.DataFrame(
-            list(feature_importances.items()), columns=['Feature', 'Contribution']
-        ).sort_values(by='Contribution', ascending=False).reset_index(drop=True)
+            list(feature_contributions.items()), columns=["Feature", "Contribution"]
+        ).sort_values(by="Contribution", ascending=False).reset_index(drop=True)
 
         return contributions_df
 

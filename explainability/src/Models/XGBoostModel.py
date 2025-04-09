@@ -27,38 +27,95 @@ class XGBoostModel(Model):
         super().__init__()
         self.model = xgb.XGBClassifier(objective='binary:logistic', eval_metric='logloss', random_state=42)
 
+    # def backend_inherent(self, X_instance):
+    #     """
+    #     Calculate the contribution of each feature for a single instance prediction
+    #     in an XGBoost model using the inherent Gain metric.
+    #
+    #     Parameters:
+    #         X_instance (DataFrame): The single instance to analyze, shape (1, n_features).
+    #
+    #     Returns:
+    #         DataFrame: A DataFrame with feature names and their Gain contributions.
+    #     """
+    #     # Ensure the model is trained
+    #     if not self.model.get_booster():
+    #         raise ValueError("The model must be trained before calling this method.")
+    #
+    #     # Get feature importances based on Gain
+    #     booster = self.model.get_booster()
+    #     gain_importances = booster.get_score(importance_type='gain')
+    #
+    #     # Normalize gain importances
+    #     total_gain = sum(gain_importances.values())
+    #     normalized_gain = {}
+    #     for feature in gain_importances:
+    #         normalized_gain[feature] = gain_importances[feature] / total_gain
+    #
+    #     # Create DataFrame for contributions
+    #     contributions_df = pd.DataFrame({
+    #         'Feature': list(normalized_gain.keys()),
+    #         'Contribution': list(normalized_gain.values())
+    #     }).sort_values(by='Contribution', ascending=False).reset_index(drop=True)
+    #
+    #     return contributions_df
+
     def backend_inherent(self, X_instance):
         """
-        Calculate the contribution of each feature for a single instance prediction
-        in an XGBoost model using the inherent Gain metric.
-
-        Parameters:
-            X_instance (DataFrame): The single instance to analyze, shape (1, n_features).
+        Compute feature contributions for a single instance in XGBoost by traversing
+        from root to leaf in each tree. Gain is used for importance, and the direction
+        of contribution is estimated by comparing leaf values when available.
 
         Returns:
-            DataFrame: A DataFrame with feature names and their Gain contributions.
+            pd.DataFrame: feature contributions with signed importance values.
         """
-        # Ensure the model is trained
-        if not self.model.get_booster():
-            raise ValueError("The model must be trained before calling this method.")
-
-        # Get feature importances based on Gain
         booster = self.model.get_booster()
-        gain_importances = booster.get_score(importance_type='gain')
+        tree_df = booster.trees_to_dataframe()
+        feature_names = X_instance.columns.tolist()
+        feature_contributions = {feat: 0.0 for feat in feature_names}
 
-        # Normalize gain importances
-        total_gain = sum(gain_importances.values())
-        normalized_gain = {}
-        for feature in gain_importances:
-            normalized_gain[feature] = gain_importances[feature] / total_gain
+        def resolve_node(tree, edge_id):
+            match = tree[tree['ID'] == edge_id]
+            if not match.empty:
+                return int(match['Node'].values[0])
+            return None
 
-        # Create DataFrame for contributions
-        contributions_df = pd.DataFrame({
-            'Feature': list(normalized_gain.keys()),
-            'Contribution': list(normalized_gain.values())
-        }).sort_values(by='Contribution', ascending=False).reset_index(drop=True)
+        for tree_id in tree_df['Tree'].unique():
+            tree = tree_df[tree_df['Tree'] == tree_id]
+            node = 0  # Start from root
 
-        return contributions_df
+            while True:
+                node_row = tree[tree['Node'] == node].iloc[0]
+                if node_row['Feature'] == 'Leaf':
+                    break
+
+                feature = node_row['Feature']
+                threshold = node_row['Split']
+                gain = node_row['Gain']
+                yes_node = resolve_node(tree, node_row['Yes'])
+                no_node = resolve_node(tree, node_row['No'])
+
+                if yes_node is None or no_node is None:
+                    break
+
+                feature_value = X_instance[feature].values[0]
+                child_node = yes_node if feature_value < threshold else no_node
+
+                child_row = tree[tree['Node'] == child_node].iloc[0]
+
+                # Safely get leaf values (if available)
+                parent_leaf = node_row['Leaf'] if 'Leaf' in node_row and pd.notna(node_row['Leaf']) else 0
+                child_leaf = child_row['Leaf'] if 'Leaf' in child_row and pd.notna(child_row['Leaf']) else 0
+
+                direction = np.sign(child_leaf - parent_leaf)
+                signed_gain = gain * direction
+                feature_contributions[feature] += signed_gain
+
+                node = child_node
+
+        df = pd.DataFrame(list(feature_contributions.items()), columns=['Feature', 'Contribution'])
+        df['Abs'] = df['Contribution'].abs()
+        return df.sort_values(by='Abs', ascending=False).drop(columns='Abs').reset_index(drop=True)
 
     def train(self, X_train, y_train, tune_hyperparameter=False):
         """

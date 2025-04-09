@@ -74,56 +74,127 @@ class Model(ABC):
 
         return feature_contributions
 
+    # def backend_local_lime(self, X_train, X_instance):
+    #     """
+    #     Explains a prediction for a model using LIME.
+    #     Always saves and displays the explanation as an HTML file and an image (bar plot).
+    #
+    #     Args:
+    #         X_train: A pandas DataFrame representing the training data.
+    #         X_instance: A pandas DataFrame row representing the instance to explain.
+    #
+    #     Returns:
+    #         explanation_df: DataFrame of feature contributions (weights).
+    #     """
+    #     # Set default class names
+    #     class_names = ['Survive', 'Death']
+    #
+    #     # Prepare the feature names
+    #     feature_names = X_train.columns.tolist()
+    #
+    #     # Create LIME explainer with normalized data
+    #     explainer = lime.lime_tabular.LimeTabularExplainer(
+    #         training_data=X_train.values,  # training data for LIME
+    #         feature_names=feature_names,  # Feature names
+    #         class_names=class_names,  # Class names for the output
+    #         mode='classification',  # Model type
+    #         discretize_continuous=False,  # Discretize continuous features
+    #         kernel_width=5
+    #     )
+    #
+    #     # Explain the single instance (normalized)
+    #     explanation = explainer.explain_instance(
+    #         X_instance.values[0],  # instance to explain
+    #         self.model.predict_proba,  # Prediction function
+    #         num_samples=1000,
+    #         num_features=183  # Show all features
+    #     )
+    #
+    #     # Extract the explanation as a list
+    #     explanation_list = explanation.as_list()
+    #
+    #     # Convert the explanation list to a DataFrame
+    #     explanation_df = pd.DataFrame(explanation_list, columns=['Feature', 'Contribution'])
+    #
+    #     # Add a column for absolute contribution
+    #     explanation_df['Absolute Contribution'] = explanation_df['Contribution'].abs()
+    #
+    #     # Sort the DataFrame by absolute contribution
+    #     explanation_df = explanation_df.sort_values(by='Absolute Contribution', ascending=False)
+    #     # Remove the 'Absolute Contribution' column
+    #     explanation_df = explanation_df.drop(columns=['Absolute Contribution'])
+    #     return explanation_df
 
-    def backend_local_lime(self, X_train, X_instance):
+    def backend_local_lime(self, X_train_unscaled, X_instance_unscaled, scaler, threshold=0.001):
         """
-        Explains a prediction for a model using LIME.
-        Always saves and displays the explanation as an HTML file and an image (bar plot).
+        Computes a local explanation using LIME for a single instance.
+
+        LIME runs on unscaled data, and predictions are made after applying the given scaler.
 
         Args:
-            X_train: A pandas DataFrame representing the training data.
-            X_instance: A pandas DataFrame row representing the instance to explain.
+            X_train_unscaled (pd.DataFrame): Original training data (not normalized).
+            X_instance_unscaled (pd.DataFrame): The specific instance to explain (not normalized).
+            scaler (StandardScaler): The fitted scaler used to normalize training and test data.
+            threshold (float): Minimum absolute contribution to include a feature.
 
         Returns:
-            explanation_df: DataFrame of feature contributions (weights).
+            pd.DataFrame: Explanation with 'Feature' and 'Contribution', sorted by abs.
         """
-        # Set default class names
+
+        feature_names = X_train_unscaled.columns.tolist()
         class_names = ['Survive', 'Death']
 
-        # Prepare the feature names
-        feature_names = X_train.columns.tolist()
-
-        # Create LIME explainer with normalized data
+        # Step 1: create explainer on unscaled data
         explainer = lime.lime_tabular.LimeTabularExplainer(
-            training_data=X_train.values,  # training data for LIME
-            feature_names=feature_names,  # Feature names
-            class_names=class_names,  # Class names for the output
-            mode='classification',  # Model type
-            discretize_continuous=False,  # Discretize continuous features
-            kernel_width=5
+            training_data=X_train_unscaled.values,
+            feature_names=feature_names,
+            class_names=class_names,
+            mode='classification',
+            discretize_continuous=False,
+            kernel_width=3
         )
 
-        # Explain the single instance (normalized)
-        explanation = explainer.explain_instance(
-            X_instance.values[0],  # instance to explain
-            self.model.predict_proba,  # Prediction function
-            num_samples=1000,
-            num_features=183  # Show all features
+        # Step 2: prediction wrapper with scaling
+        def predict_scaled(X_unscaled_batch):
+            X_scaled_batch = scaler.transform(X_unscaled_batch)
+            return self.model.predict_proba(X_scaled_batch)
+
+        # Step 3: first LIME run with all features
+        explanation_full = explainer.explain_instance(
+            X_instance_unscaled.values[0],
+            predict_scaled,
+            num_samples=3000,
+            num_features=len(feature_names)
         )
 
-        # Extract the explanation as a list
-        explanation_list = explanation.as_list()
+        # Select important features
+        full_contrib = dict(explanation_full.as_list())
+        important_features = [feat for feat, val in full_contrib.items() if abs(val) >= threshold]
+        if not important_features:
+            important_features = list(full_contrib.keys())
 
-        # Convert the explanation list to a DataFrame
-        explanation_df = pd.DataFrame(explanation_list, columns=['Feature', 'Contribution'])
+        # Step 4: refined explanation
+        explanation_refined = explainer.explain_instance(
+            X_instance_unscaled.values[0],
+            predict_scaled,
+            num_samples=3000,
+            num_features=len(important_features)
+        )
 
-        # Add a column for absolute contribution
-        explanation_df['Absolute Contribution'] = explanation_df['Contribution'].abs()
+        # Format output
+        refined_contrib = dict(explanation_refined.as_list())
+        contributions = []
+        for feat in feature_names:
+            contrib = refined_contrib.get(feat, 0.0)
+            if abs(contrib) < threshold:
+                contrib = 0.0
+            contributions.append((feat, contrib))
 
-        # Sort the DataFrame by absolute contribution
-        explanation_df = explanation_df.sort_values(by='Absolute Contribution', ascending=False)
-        # Remove the 'Absolute Contribution' column
-        explanation_df = explanation_df.drop(columns=['Absolute Contribution'])
+        explanation_df = pd.DataFrame(contributions, columns=['Feature', 'Contribution'])
+        explanation_df['Abs'] = explanation_df['Contribution'].abs()
+        explanation_df = explanation_df.sort_values(by='Abs', ascending=False).drop(columns='Abs').reset_index(
+            drop=True)
+
         return explanation_df
 
     @abstractmethod
@@ -135,7 +206,7 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def global_explain(self, X_train ,y_train):
+    def global_explain(self, X_train, y_train):
         pass
 
     @abstractmethod
