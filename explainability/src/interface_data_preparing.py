@@ -23,6 +23,11 @@ decisionTreeModel = ModelManager.load_model("DecisionTreeClassifier")
 logisticRegressionModel = ModelManager.load_model("LogisticRegression")
 xgboostModel = ModelManager.load_model("XGBClassifier")
 
+# probs = decisionTreeModel.get_unique_leaf_probabilities()
+# print("הסתברויות שונות למוות:", probs)
+# print("סה״כ הסתברויות שונות:", len(probs))
+
+
 # Initialize the StandardScaler
 scaler = StandardScaler()
 
@@ -118,12 +123,12 @@ for i in range(len(X_sample)):
         model_name = model.backend_get_name()
 
         # Select appropriate data for normalization
-        if model_name == "XGBOOST":
-            X_sample_for_prediction = X_sample
-            X_train_for_prediction = X_train
-        else:
+        if model_name == "LogisticRegression":
             X_sample_for_prediction = normalized_X_sample
             X_train_for_prediction = X_train_normalized
+        else:
+            X_sample_for_prediction = X_sample
+            X_train_for_prediction = X_train
 
         individual_data = X_sample_for_prediction.iloc[[i]]
 
@@ -133,7 +138,7 @@ for i in range(len(X_sample)):
         # if model.get_type() == "LogisticRegression":
         #     shap_df = decisionTreeModel.backend_local_shap(individual_data)
         shap_df = model.backend_local_shap(individual_data, X_train_for_prediction)
-        lime_df = model.backend_local_lime(X_train_unscaled=X_train, X_instance_unscaled=X_sample.iloc[[i]], scaler=scaler)
+        lime_df = model.backend_local_lime(X_train_for_prediction, individual_data)
 
         # Normalize contributions
         inherent_df = normalize_contributions(inherent_df)

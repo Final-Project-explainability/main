@@ -15,6 +15,9 @@ from graphviz import Digraph, Source
 from explainability.src.Models.Model import Model
 from sklearn.tree import _tree
 
+from sklearn.model_selection import RandomizedSearchCV
+from scipy.stats import randint
+
 class DecisionTreeModel(Model):
     def __init__(self):
         super().__init__()
@@ -73,76 +76,123 @@ class DecisionTreeModel(Model):
 
     def backend_inherent(self, X_instance):
         """
-        Calculate the contribution of each feature for a single instance prediction
-        using the path through the decision tree, including direction of effect
-        (positive = increases risk of death, negative = decreases).
+        Calculates feature contributions based on change in predicted probability (Δp)
+        along the decision path of a single instance.
 
         Parameters:
-            X_instance (DataFrame): The single instance to analyze, shape (1, n_features).
+            X_instance (DataFrame): Single instance to explain.
 
         Returns:
-            DataFrame: A DataFrame with feature names, signed importance scores.
+            DataFrame: Feature contributions (signed Δp), sorted by magnitude.
         """
         tree = self.model.tree_
         feature_names = X_instance.columns
-        feature_contributions = {name: 0 for name in feature_names}
         instance_values = X_instance.iloc[0].values
+        feature_contributions = {name: 0.0 for name in feature_names}
 
-        node = 0  # Start from root
+        node = 0  # Start at root
         while tree.feature[node] != _tree.TREE_UNDEFINED:
             feature_index = tree.feature[node]
             feature_name = feature_names[feature_index]
             threshold = tree.threshold[node]
 
-            # Children nodes
             left_child = tree.children_left[node]
             right_child = tree.children_right[node]
 
-            # Decide direction based on instance value
             if instance_values[feature_index] <= threshold:
                 child_node = left_child
             else:
                 child_node = right_child
 
-            # Calculate impurity reduction
-            parent_impurity = tree.impurity[node]
-            child_impurity = tree.impurity[child_node]
-            n_samples_parent = tree.n_node_samples[node]
-            n_samples_child = tree.n_node_samples[child_node]
+            # Compute probability of death in parent and child
+            p_parent = tree.value[node][0][1] / tree.value[node][0].sum()
+            p_child = tree.value[child_node][0][1] / tree.value[child_node][0].sum()
 
-            importance = abs(parent_impurity - child_impurity) * (n_samples_child / n_samples_parent)
+            delta_p = p_child - p_parent
+            feature_contributions[feature_name] += delta_p
 
-            # --- Determine direction (sign) ---
-            parent_prob = tree.value[node][0][1] / tree.value[node][0].sum()
-            child_prob = tree.value[child_node][0][1] / tree.value[child_node][0].sum()
-
-            if child_prob > parent_prob:
-                signed_contribution = importance  # more likely to die
-            else:
-                signed_contribution = -importance  # less likely to die
-
-            feature_contributions[feature_name] += signed_contribution
-            node = child_node  # Continue down the tree
+            node = child_node
 
         # Convert to DataFrame
         contributions_df = pd.DataFrame(
             list(feature_contributions.items()), columns=["Feature", "Contribution"]
-        ).sort_values(by="Contribution", ascending=False).reset_index(drop=True)
+        )
+        contributions_df['Abs'] = contributions_df['Contribution'].abs()
+        contributions_df = contributions_df.sort_values(by='Abs', ascending=False).drop(columns='Abs').reset_index(
+            drop=True)
 
         return contributions_df
 
+    # def train(self, X_train, y_train):
+    #     """
+    #         Train a single Decision Tree classifier with hyperparameter tuning and save the best parameters.
+    #         Args:
+    #             X_train: Training feature set.
+    #             y_train: Training labels.
+    #         Returns:
+    #             model: Trained Decision Tree model.
+    #         """
+    #     print("Training a single Decision Tree with hyperparameter tuning...")
+    #
+    #     params_path = "../data/jsons/decision_tree_paramss.json"
+    #
+    #     # Check if we have pre-saved parameters
+    #     if os.path.exists(params_path):
+    #         with open(params_path, 'r') as file:
+    #             best_params = json.load(file)
+    #         print(f"Loaded best parameters from {params_path}: {best_params}")
+    #         model = DecisionTreeClassifier(**best_params, random_state=42)
+    #         model.fit(X_train, y_train)
+    #     else:
+    #         # Define hyperparameter grid
+    #         param_grid = {
+    #             'max_depth': [3, 5, 10, None],
+    #             'min_samples_split': [2, 5, 10],
+    #             'min_samples_leaf': [1, 2, 4],
+    #             'criterion': ['gini', 'entropy']
+    #         }
+    #         # Perform grid search
+    #         grid_search = GridSearchCV(
+    #             DecisionTreeClassifier(random_state=42),
+    #             param_grid,
+    #             scoring='roc_auc',
+    #             cv=5,
+    #             n_jobs=-1
+    #         )
+    #         grid_search.fit(X_train, y_train)
+    #
+    #         # Get the best parameters and model
+    #         best_params = grid_search.best_params_
+    #         print(f"Best Parameters: {best_params}")
+    #
+    #         # Save the best parameters to a JSON file
+    #         os.makedirs(os.path.dirname(params_path), exist_ok=True)  # Create directory if it doesn't exist
+    #         with open(params_path, 'w') as f:
+    #             json.dump(best_params, f)
+    #         print(f"Saved best parameters to {params_path}")
+    #
+    #         model = grid_search.best_estimator_
+    #
+    #     self.model = model
+    #     self.set_name()
+    #
+    #     return model
+
     def train(self, X_train, y_train):
         """
-            Train a single Decision Tree classifier with hyperparameter tuning and save the best parameters.
-            Args:
-                X_train: Training feature set.
-                y_train: Training labels.
-            Returns:
-                model: Trained Decision Tree model.
-            """
+        Train a single Decision Tree classifier with hyperparameter tuning and save the best parameters.
+        Handles imbalanced data using class_weight='balanced'.
+
+        Args:
+            X_train: Training feature set.
+            y_train: Training labels.
+
+        Returns:
+            model: Trained Decision Tree model.
+        """
         print("Training a single Decision Tree with hyperparameter tuning...")
 
-        params_path = "../data/jsons/decision_tree_params.json"
+        params_path = "../data/jsons/decision_tree_params2.json"
 
         # Check if we have pre-saved parameters
         if os.path.exists(params_path):
@@ -151,35 +201,39 @@ class DecisionTreeModel(Model):
             print(f"Loaded best parameters from {params_path}: {best_params}")
             model = DecisionTreeClassifier(**best_params, random_state=42)
             model.fit(X_train, y_train)
+
         else:
-            # Define hyperparameter grid
-            param_grid = {
+            # Define hyperparameter search space
+            param_dist = {
                 'max_depth': [3, 5, 10, None],
-                'min_samples_split': [2, 5, 10],
-                'min_samples_leaf': [1, 2, 4],
+                'min_samples_split': randint(2, 11),
+                'min_samples_leaf': randint(1, 5),
                 'criterion': ['gini', 'entropy']
             }
-            # Perform grid search
-            grid_search = GridSearchCV(
+
+            # RandomizedSearch for better efficiency
+            search = RandomizedSearchCV(
                 DecisionTreeClassifier(random_state=42),
-                param_grid,
+                param_distributions=param_dist,
+                n_iter=20,
                 scoring='roc_auc',
                 cv=5,
-                n_jobs=-1
+                n_jobs=1,  # Single thread to avoid Windows multiprocessing issues
+                random_state=42
             )
-            grid_search.fit(X_train, y_train)
 
-            # Get the best parameters and model
-            best_params = grid_search.best_params_
+            search.fit(X_train, y_train)
+
+            best_params = search.best_params_
             print(f"Best Parameters: {best_params}")
 
-            # Save the best parameters to a JSON file
-            os.makedirs(os.path.dirname(params_path), exist_ok=True)  # Create directory if it doesn't exist
+            # Save best params
+            os.makedirs(os.path.dirname(params_path), exist_ok=True)
             with open(params_path, 'w') as f:
                 json.dump(best_params, f)
             print(f"Saved best parameters to {params_path}")
 
-            model = grid_search.best_estimator_
+            model = search.best_estimator_
 
         self.model = model
         self.set_name()
@@ -384,7 +438,7 @@ class DecisionTreeModel(Model):
             save_as_png: If True, save the tree as a PNG file.
         """
         # Using sklearn's built-in plot_tree (Matplotlib)
-        plt.figure(figsize=(20, 10))
+        plt.figure(figsize=(80, 10))
         plot_tree(
             self.model,
             feature_names=feature_names,
@@ -630,6 +684,31 @@ class DecisionTreeModel(Model):
 
     def backend_get_name(self):
         return "DecisionTree"
+
+    def get_unique_leaf_probabilities(self):
+        """
+        Extracts and returns the unique predicted probabilities for class 1 (e.g. death)
+        from all leaf nodes of the decision tree.
+
+        Returns:
+            List of unique probabilities for class 1 at leaf nodes, sorted ascending.
+        """
+        tree = self.model.tree_
+        children_left = tree.children_left
+        children_right = tree.children_right
+        values = tree.value
+
+        leaf_probabilities = []
+
+        for node_id in range(tree.node_count):
+            is_leaf = children_left[node_id] == children_right[node_id]
+            if is_leaf:
+                class_counts = values[node_id][0]
+                total = class_counts.sum()
+                prob_death = class_counts[1] / total if total > 0 else 0
+                leaf_probabilities.append(round(prob_death, 4))
+
+        return sorted(set(leaf_probabilities))
 
 
 from sklearn.inspection import permutation_importance

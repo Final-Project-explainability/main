@@ -1,3 +1,5 @@
+import re
+
 from lime.lime_tabular import LimeTabularExplainer
 import lime
 import lime.lime_tabular
@@ -125,64 +127,81 @@ class Model(ABC):
     #     explanation_df = explanation_df.drop(columns=['Absolute Contribution'])
     #     return explanation_df
 
-    def backend_local_lime(self, X_train_unscaled, X_instance_unscaled, scaler, threshold=0.001):
+    import re
+
+    def backend_local_lime(self, X_train, X_instance, threshold=0.01):
         """
         Computes a local explanation using LIME for a single instance.
-
-        LIME runs on unscaled data, and predictions are made after applying the given scaler.
+        Uses two-pass logic: the first to determine important features,
+        and the second for full aggregation and cleaned explanation.
 
         Args:
-            X_train_unscaled (pd.DataFrame): Original training data (not normalized).
-            X_instance_unscaled (pd.DataFrame): The specific instance to explain (not normalized).
-            scaler (StandardScaler): The fitted scaler used to normalize training and test data.
-            threshold (float): Minimum absolute contribution to include a feature.
+            X_train (pd.DataFrame): The training data used to initialize the LIME explainer.
+            X_instance (pd.DataFrame): A single row (instance) to explain.
+            threshold (float): Minimum absolute contribution to consider a feature important.
 
         Returns:
-            pd.DataFrame: Explanation with 'Feature' and 'Contribution', sorted by abs.
+            pd.DataFrame: Explanation table with 'Feature' and 'Contribution' columns,
+                          sorted by absolute contribution.
         """
 
-        feature_names = X_train_unscaled.columns.tolist()
-        class_names = ['Survive', 'Death']
+        def extract_feature_name(cond_str):
+            match = re.search(r'[a-zA-Z_][a-zA-Z0-9_]*', cond_str)
+            return match.group(0) if match else cond_str
 
-        # Step 1: create explainer on unscaled data
+        class_names = ['Survive', 'Death']
+        feature_names = X_train.columns.tolist()
+
+        binary_features = [
+            'elective_surgery', 'apache_post_operative', 'arf_apache', 'gcs_unable_apache',
+            'intubated_apache', 'ventilated_apache', 'aids', 'cirrhosis', 'diabetes_mellitus',
+            'hepatic_failure', 'immunosuppression', 'leukemia', 'lymphoma', 'solid_tumor_with_metastasis'
+        ]
+
+        categorical_indices = [X_train.columns.get_loc(f) for f in binary_features]
+        # categorical_names = {
+        #     idx: sorted(X_train.iloc[:, idx].dropna().unique().tolist())
+        #     for idx in categorical_indices
+        # }
+
         explainer = lime.lime_tabular.LimeTabularExplainer(
-            training_data=X_train_unscaled.values,
+            training_data=X_train.values,
             feature_names=feature_names,
             class_names=class_names,
             mode='classification',
-            discretize_continuous=False,
+            discretize_continuous=True,
+            categorical_features=categorical_indices,
             kernel_width=3
         )
 
-        # Step 2: prediction wrapper with scaling
-        def predict_scaled(X_unscaled_batch):
-            X_scaled_batch = scaler.transform(X_unscaled_batch)
-            return self.model.predict_proba(X_scaled_batch)
-
-        # Step 3: first LIME run with all features
-        explanation_full = explainer.explain_instance(
-            X_instance_unscaled.values[0],
-            predict_scaled,
-            num_samples=3000,
+        # Pass 1: rough extraction of important features (no aggregation yet)
+        explanation = explainer.explain_instance(
+            X_instance.values[0],
+            self.model.predict_proba,
+            num_samples=1000,
             num_features=len(feature_names)
         )
 
-        # Select important features
-        full_contrib = dict(explanation_full.as_list())
-        important_features = [feat for feat, val in full_contrib.items() if abs(val) >= threshold]
-        if not important_features:
-            important_features = list(full_contrib.keys())
+        raw_explanation = explanation.as_list()
+        important_features = [
+            feat
+            for feat, val in raw_explanation if abs(val) >= threshold
+        ]
 
-        # Step 4: refined explanation
+
+        # Pass 2: refined explanation with aggregation by true feature name
         explanation_refined = explainer.explain_instance(
-            X_instance_unscaled.values[0],
-            predict_scaled,
-            num_samples=3000,
+            X_instance.values[0],
+            self.model.predict_proba,
+            num_samples=1000,
             num_features=len(important_features)
         )
 
-        # Format output
-        refined_contrib = dict(explanation_refined.as_list())
+        refined_contrib = {}
+        for cond_str, val in explanation_refined.as_list():
+            feat = extract_feature_name(cond_str)
+            refined_contrib[feat] = refined_contrib.get(feat, 0.0) + val
+
         contributions = []
         for feat in feature_names:
             contrib = refined_contrib.get(feat, 0.0)
