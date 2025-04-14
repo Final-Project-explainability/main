@@ -28,6 +28,79 @@ class Model(ABC):
         self.model = None
         self.name = None
 
+    def global_explain_with_shap(self, X_train):
+        """
+        Provides a global explanation of the trained model using SHAP values.
+
+        Args:
+            X_train (pd.DataFrame): The dataset to explain.
+
+        Returns:
+            shap_values: SHAP values object for visualization and analysis.
+            summary_df: DataFrame with mean absolute SHAP values per feature.
+        """
+        # Create SHAP explainer
+        try:
+            explainer = shap.Explainer(self.model, X_train)
+        except Exception:
+            explainer = shap.Explainer(self.model.predict, X_train)
+
+        shap_values = explainer(X_train)
+
+        # Compute mean absolute SHAP values
+        mean_abs_shap = np.abs(shap_values.values).mean(axis=0)
+
+        # Handle multi-output (e.g., DecisionTreeClassifier)
+        if mean_abs_shap.ndim == 2:
+            mean_abs_shap = mean_abs_shap.mean(axis=1)
+
+        # Build summary dataframe
+        summary_df = pd.DataFrame({
+            'Feature': X_train.columns,
+            'Mean |SHAP|': mean_abs_shap
+        }).sort_values(by='Mean |SHAP|', ascending=False).reset_index(drop=True)
+
+        # Plot summary
+        # shap.summary_plot(shap_values, X_train, plot_type="bar", show=True)
+
+        return shap_values, summary_df
+
+    def global_explain_with_lime(self, X_train, X_sample):
+        """
+        Provides a global explanation using LIME by averaging local explanations
+        over a pre-sampled subset of the training data.
+
+        Args:
+            X_train (pd.DataFrame): The full training dataset (used for LIME initialization).
+            X_sample (pd.DataFrame): A sampled subset of X_train to use for the global explanation.
+
+        Returns:
+            pd.DataFrame: Global explanation with 'Feature' and 'Mean |Contribution|' columns.
+        """
+        feature_names = X_train.columns.tolist()
+        total_contribs = {feat: [] for feat in feature_names}
+
+        # Compute local explanations and accumulate absolute contributions
+        for i in range(len(X_sample)):
+            instance_df = X_sample.iloc[[i]]  # preserve as DataFrame
+            local_expl = self.backend_local_lime(X_train, instance_df)
+
+            for _, row in local_expl.iterrows():
+                total_contribs[row['Feature']].append(abs(row['Contribution']))
+
+        # Aggregate to mean absolute contributions
+        global_contrib = {
+            feat: np.mean(total_contribs[feat]) if total_contribs[feat] else 0.0
+            for feat in feature_names
+        }
+
+        summary_df = pd.DataFrame({
+            'Feature': list(global_contrib.keys()),
+            'Mean |Contribution|': list(global_contrib.values())
+        }).sort_values(by='Mean |Contribution|', ascending=False).reset_index(drop=True)
+
+        return summary_df
+
     @abstractmethod
     def backend_inherent(self, X_instance):
         pass
@@ -210,9 +283,9 @@ class Model(ABC):
             contributions.append((feat, contrib))
 
         explanation_df = pd.DataFrame(contributions, columns=['Feature', 'Contribution'])
-        explanation_df['Abs'] = explanation_df['Contribution'].abs()
-        explanation_df = explanation_df.sort_values(by='Abs', ascending=False).drop(columns='Abs').reset_index(
-            drop=True)
+        # explanation_df['Abs'] = explanation_df['Contribution'].abs()
+        # explanation_df = explanation_df.sort_values(by='Abs', ascending=False).drop(columns='Abs').reset_index(
+        #     drop=True)
 
         return explanation_df
 
