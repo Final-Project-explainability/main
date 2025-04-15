@@ -619,7 +619,7 @@ class DecisionTreeModel(Model):
         # החזרת רשימת ה-NODES בנתיב
         return path_nodes
 
-    def global_explain(self, X_train, y_train):
+    def global_explain_inherent(self, X_train):
         """
         Display and plot the feature importances from a trained Decision Tree model,
         and save feature importance in a sorted JSON file.
@@ -631,7 +631,7 @@ class DecisionTreeModel(Model):
         """
         feature_names = X_train.columns
 
-        self.visualize_decision_tree(feature_names=feature_names)
+        # self.visualize_decision_tree(feature_names=feature_names)
 
         # Extract feature importances
         importances = self.model.feature_importances_
@@ -639,46 +639,46 @@ class DecisionTreeModel(Model):
         # Combine feature names and their importances into a DataFrame
         feature_importances = pd.DataFrame({
             "Feature": feature_names,
-            "Importance": importances
+            "Contribution": importances
         })
 
-        # Compute relative importance as percentages
-        feature_importances['Importance (%)'] = (feature_importances['Importance'] / feature_importances[
-            'Importance'].sum()) * 100
+        # # Compute relative importance as percentages
+        # feature_importances['Importance (%)'] = (feature_importances['Importance'] / feature_importances[
+        #     'Importance'].sum()) * 100
 
         # Sort features by importance in descending order
-        feature_importances = feature_importances.sort_values(by="Importance (%)", ascending=False)
+        feature_importances = feature_importances.sort_values(by="Contribution", ascending=False)
 
-        # Save all feature importances to JSON
-        feature_importance_dict = {
-            row['Feature']: float(row['Importance (%)'])
-            for _, row in feature_importances.iterrows()
-        }
+        # # Save all feature importances to JSON
+        # feature_importance_dict = {
+        #     row['Feature']: float(row['Importance (%)'])
+        #     for _, row in feature_importances.iterrows()
+        # }
 
         # with open("decision_tree_feature_importance.json", "w") as f:
         #     json.dump(feature_importance_dict, f, indent=4)
 
         # print("Feature importance saved to 'decision_tree_feature_importance.json'.")
+        #
+        # # Select the top 20 features for visualization
+        # top_20_features = feature_importances.head(20)
+        #
+        # # Plot the feature importances as a horizontal bar chart
+        # plt.figure(figsize=(8, 9.5))  # Adjust this ratio as needed
+        #
+        # # Create horizontal bar plot with reversed order so the most important feature is at the top
+        # plt.barh(top_20_features['Feature'][::-1], top_20_features['Importance (%)'][::-1], color='skyblue')
+        #
+        # plt.xlabel('Importance (%)')
+        # plt.title('Top 20 Feature Importances')
+        #
+        # # Ensure labels are horizontal for better readability
+        # plt.yticks(rotation=0)
+        # plt.tight_layout()  # Ensures the labels and titles fit in the plot
+        #
+        # plt.show()
 
-        # Select the top 20 features for visualization
-        top_20_features = feature_importances.head(20)
-
-        # Plot the feature importances as a horizontal bar chart
-        plt.figure(figsize=(8, 9.5))  # Adjust this ratio as needed
-
-        # Create horizontal bar plot with reversed order so the most important feature is at the top
-        plt.barh(top_20_features['Feature'][::-1], top_20_features['Importance (%)'][::-1], color='skyblue')
-
-        plt.xlabel('Importance (%)')
-        plt.title('Top 20 Feature Importances')
-
-        # Ensure labels are horizontal for better readability
-        plt.yticks(rotation=0)
-        plt.tight_layout()  # Ensures the labels and titles fit in the plot
-
-        plt.show()
-
-        compute_permutation_importance_train(self.model, X_train, y_train)
+        # compute_permutation_importance_train(self.model, X_train, y_train)
 
         return feature_importances
 

@@ -235,7 +235,7 @@ def manage_models(X_train, y_train, X_test, y_test, model_choice):
         ModelManager.save_model(model)
 
     print("\nPerforming global explanations...")
-    model.global_explain(X_train=X_train,y_train=y_train)
+    model.global_explain_inherent(X_train=X_train, y_train=y_train)
     # print("\nPerforming local explanations using LIME...")
 
     LocalExplainer.analyze_individual_risk(model, X_test, y_test, X_train)

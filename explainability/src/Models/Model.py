@@ -57,13 +57,13 @@ class Model(ABC):
         # Build summary dataframe
         summary_df = pd.DataFrame({
             'Feature': X_train.columns,
-            'Mean |SHAP|': mean_abs_shap
-        }).sort_values(by='Mean |SHAP|', ascending=False).reset_index(drop=True)
+            'Contribution': mean_abs_shap
+        }).sort_values(by='Contribution', ascending=False).reset_index(drop=True)
 
         # Plot summary
         # shap.summary_plot(shap_values, X_train, plot_type="bar", show=True)
 
-        return shap_values, summary_df
+        return summary_df
 
     def global_explain_with_lime(self, X_train, X_sample):
         """
@@ -108,46 +108,44 @@ class Model(ABC):
     def backend_local_shap(self, X_instance, X_train):
         """
         Explains a prediction using SHAP for different model types.
-        Displays the 10 most important features and the sum of the remaining features in descending order of importance.
+        Displays each feature’s contribution to the prediction (not additive to inherent).
+        This version uses background data for tree models, to ensure SHAP differs from inherent explanations.
 
         Args:
-            X_instance: A pandas DataFrame row representing the instance to explain.
+            X_instance (pd.DataFrame): A single-row instance to explain.
+            X_train (pd.DataFrame): Training set, used for background.
 
         Returns:
-            feature_contributions: DataFrame with features, their SHAP contributions, and absolute contributions.
+            pd.DataFrame: Feature contributions (SHAP values).
         """
-
-        # Select the appropriate SHAP explainer based on the model type
-        if hasattr(self.model, "coef_"):  # Assuming a logistic regression model
+        # Determine the appropriate SHAP explainer
+        if hasattr(self.model, "coef_"):  # Linear models (e.g., LogisticRegression)
             explainer = shap.Explainer(self.model, X_train, feature_names=X_instance.columns)
-        # Select the appropriate SHAP explainer based on the model type
-        else:
-            explainer = shap.TreeExplainer(self.model)
+        else:  # Tree-based models: use background data to ensure SHAP ≠ pred_contribs
+            explainer = shap.TreeExplainer(self.model, data=X_train, feature_perturbation="interventional")
 
         # Compute SHAP values
         shap_values = explainer.shap_values(X_instance)
 
-        # Handle 3D arrays (e.g., for multiclass classification)
-        if shap_values.ndim == 3:
-            # Extract the contributions for the desired class (e.g., class 1)
-            shap_values_class_1 = shap_values[0, :, 1]  # Assuming you want class 1 contributions
-        elif isinstance(shap_values, list):
-            shap_values_class_1 = shap_values[1]
+        # Handle binary or multiclass case
+        if isinstance(shap_values, list):
+            # For binary classification models, shap_values is [class_0, class_1]
+            shap_values_instance = shap_values[1][0]  # class 1, first instance
+        elif shap_values.ndim == 3:
+            shap_values_instance = shap_values[0, :, 1]  # class 1 for one instance
         else:
-            shap_values_class_1 = shap_values[0]
+            shap_values_instance = shap_values[0]  # 1D array for binary classification
 
-        # Combine feature names and SHAP values into a DataFrame
+        # Build DataFrame
         feature_contributions = pd.DataFrame({
             "Feature": X_instance.columns,
-            "Contribution": shap_values_class_1,
-            "Absolute Contribution": np.abs(shap_values_class_1)
+            "Contribution": shap_values_instance,
+            "Absolute Contribution": np.abs(shap_values_instance)
         })
 
-        # Sort features by absolute contribution to highlight the most impactful ones
+        # Sort by importance (absolute value)
         feature_contributions = feature_contributions.sort_values(by="Absolute Contribution", ascending=False)
-        feature_contributions = feature_contributions.drop(columns=['Absolute Contribution'])
-
-        return feature_contributions
+        return feature_contributions.drop(columns=["Absolute Contribution"])
 
     # def backend_local_lime(self, X_train, X_instance):
     #     """
@@ -296,13 +294,13 @@ class Model(ABC):
     @abstractmethod
     def local_explain(self, X_train, X_instance, predicted_probability):
         pass
+    #
+    # @abstractmethod
+    # def global_explain_inherent(self, X_train, y_train):
+    #     pass
 
     @abstractmethod
-    def global_explain(self, X_train, y_train):
-        pass
-
-    @abstractmethod
-    def global_explain(self, X_train):
+    def global_explain_inherent(self, X_train):
         pass
 
     def set_name(self):

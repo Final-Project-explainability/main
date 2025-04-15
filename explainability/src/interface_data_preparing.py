@@ -191,7 +191,7 @@ def build_contributions_matrix():
         print(f"Contributions saved to {output_file}")
 
 
-# build_contributions_matrix()
+build_contributions_matrix()
 
 X_train_sample = X_train.sample(frac=0.05, random_state=42)
 X_train_sample_normalized = X_train_normalized.sample(frac=0.05, random_state=42)
@@ -206,7 +206,25 @@ def global_explain():
             X_sample_for_prediction = X_train_sample
             X_train_for_prediction = X_train
 
-        shap_val = model.global_explain_with_shap(X_train_for_prediction)
-        lime_val = model.global_explain_with_lime(X_train_for_prediction, X_sample_for_prediction)
+        # shap_val = model.global_explain_with_shap(X_train_for_prediction)
+        # lime_val = model.global_explain_with_lime(X_train_for_prediction, X_sample_for_prediction)
+        # shap_df = normalize_contributions(shap_val)
+        inherent_df = model.global_explain_inherent(X_train=X_train_for_prediction)
+        inherent_df = normalize_contributions(inherent_df)
 
-global_explain()
+        # Format output
+        formatted_output = format_model_output(
+            model_name,
+            inherent=inherent_df.to_dict(orient="records"),
+        )
+
+        json_output = {}
+        json_output.update(formatted_output)
+        # Save the JSON for the patient
+        output_file = os.path.join(f"{model_name}_global_inherent.json")
+        with open(output_file, "w") as f:
+            json.dump(json_output, f, indent=4)
+
+        print(f"Contributions saved to {output_file}")
+
+#global_explain()

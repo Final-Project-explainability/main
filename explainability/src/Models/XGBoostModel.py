@@ -27,6 +27,32 @@ class XGBoostModel(Model):
         super().__init__()
         self.model = xgb.XGBClassifier(objective='binary:logistic', eval_metric='logloss', random_state=42)
 
+    def global_explain_inherent(self, X_train):
+        """
+        Compute global feature importance from an XGBoost model using 'gain' as the importance type.
+
+        Args:
+            X_train (pd.DataFrame): The training data (only used to extract feature names).
+
+        Returns:
+            pd.DataFrame: DataFrame with feature importances (gain), unnormalized.
+        """
+        booster = self.model.get_booster()
+        importance_dict = booster.get_score(importance_type='gain')
+
+        all_features = list(X_train.columns)
+        importance_data = [
+            {
+                "Feature": feature,
+                "Contribution": importance_dict.get(feature, 0.0)
+            }
+            for feature in all_features
+        ]
+
+        df = pd.DataFrame(importance_data)
+        df = df.sort_values(by="Contribution", ascending=False).reset_index(drop=True)
+        return df
+
     # def backend_inherent(self, X_instance):
     #     """
     #     Calculate the contribution of each feature for a single instance prediction
@@ -62,60 +88,41 @@ class XGBoostModel(Model):
 
     def backend_inherent(self, X_instance):
         """
-        Compute feature contributions for a single instance in XGBoost by traversing
-        from root to leaf in each tree. Gain is used for importance, and the direction
-        of contribution is estimated by comparing leaf values when available.
+        Compute local feature contributions (inherent explanation) for a single instance
+        using XGBoost's pred_contribs=True.
+
+        Args:
+            X_instance (pd.DataFrame): A single-row DataFrame representing one example.
 
         Returns:
-            pd.DataFrame: feature contributions with signed importance values.
+            pd.DataFrame: DataFrame with each feature's contribution and the bias term.
         """
-        booster = self.model.get_booster()
-        tree_df = booster.trees_to_dataframe()
-        feature_names = X_instance.columns.tolist()
-        feature_contributions = {feat: 0.0 for feat in feature_names}
 
-        def resolve_node(tree, edge_id):
-            match = tree[tree['ID'] == edge_id]
-            if not match.empty:
-                return int(match['Node'].values[0])
-            return None
+        # Create DMatrix with feature names
+        dmatrix = xgb.DMatrix(X_instance, feature_names=list(X_instance.columns))
 
-        for tree_id in tree_df['Tree'].unique():
-            tree = tree_df[tree_df['Tree'] == tree_id]
-            node = 0  # Start from root
+        # Get per-feature contributions (including bias)
+        contribs = self.model.get_booster().predict(dmatrix, pred_contribs=True)[0]
 
-            while True:
-                node_row = tree[tree['Node'] == node].iloc[0]
-                if node_row['Feature'] == 'Leaf':
-                    break
+        # Remove the last entry (bias)
+        contribs = contribs[:-1]
 
-                feature = node_row['Feature']
-                threshold = node_row['Split']
-                gain = node_row['Gain']
-                yes_node = resolve_node(tree, node_row['Yes'])
-                no_node = resolve_node(tree, node_row['No'])
+        # Prepare output DataFrame
+        feature_names = list(X_instance.columns)
+        df = pd.DataFrame({
+            "Feature": feature_names,
+            "Contribution": contribs
+        })
 
-                if yes_node is None or no_node is None:
-                    break
+        # # Optional: compute predicted logit and probability
+        # logit = np.sum(contribs)
+        # probability = 1 / (1 + np.exp(-logit))
+        #
+        # print(f"Predicted logit: {logit:.4f}")
+        # print(f"Predicted probability: {probability:.4f}")
 
-                feature_value = X_instance[feature].values[0]
-                child_node = yes_node if feature_value < threshold else no_node
+        return df
 
-                child_row = tree[tree['Node'] == child_node].iloc[0]
-
-                # Safely get leaf values (if available)
-                parent_leaf = node_row['Leaf'] if 'Leaf' in node_row and pd.notna(node_row['Leaf']) else 0
-                child_leaf = child_row['Leaf'] if 'Leaf' in child_row and pd.notna(child_row['Leaf']) else 0
-
-                direction = np.sign(child_leaf - parent_leaf)
-                signed_gain = gain * direction
-                feature_contributions[feature] += signed_gain
-
-                node = child_node
-
-        df = pd.DataFrame(list(feature_contributions.items()), columns=['Feature', 'Contribution'])
-        df['Abs'] = df['Contribution'].abs()
-        return df.sort_values(by='Abs', ascending=False).drop(columns='Abs').reset_index(drop=True)
 
     def train(self, X_train, y_train, tune_hyperparameter=False):
         """
@@ -206,64 +213,55 @@ class XGBoostModel(Model):
         self.local_explain_with_shap(X_instance, predicted_probability)
         self.explain_with_lime(X_train, X_instance)
 
-    def global_explain(self, X_train,y_train):
-        # self.train_and_visualize_fbt(X_train = X_train, y_train=y_train, xgb_model= self)
-        # self.global_explain_with_shap(X_train=X_train)
-        # best_params, results_df = tune_lime_parameters(self.model, X_train, num_samples=500)
-        pass
-
-
-
-
-    def train_and_visualize_fbt(self,X_train,y_train, xgb_model, max_depth=5, min_forest_size=10,
-                                max_number_of_conjunctions=100, pruning_method='auc'):
-
-        try:
-            fbt = ModelManager.load_fbt(xgb_model)
-            print(" ss fbt")
-        except:  # train fbt base on the given model
-            # Combine X_train and y_train into a single DataFrame
-            train_data = X_train.copy()
-            train_data['hospital_death'] = y_train  # Add the label column
-
-            # Extract feature names
-            feature_cols = X_train.columns.tolist()
-            label_col = 'hospital_death'  # Name of the label column
-
-            # Prepare FBT
-            fbt = FBT(max_depth=max_depth,
-                      min_forest_size=min_forest_size,
-                      max_number_of_conjunctions=max_number_of_conjunctions,
-                      pruning_method=pruning_method)
-
-            X_train_sample = train_data.sample(frac=0.1, random_state=42)
-
-            # Fit the FBT model to the training data
-            fbt.fit(X_train_sample, feature_cols, label_col, xgb_model)
-
-            print("FBT model trained successfully.")
-
-            ModelManager.save_fbt(xgb_model, fbt)
-
-        # Visualize the tree (example code for visualization)
-        try:
-            print("Generating visualization...")
-            train_data = X_train.copy()
-            train_data['hospital_death'] = y_train  # Add the label column
-            X_train_sample = train_data.sample(frac=0.05, random_state=42)
-            # print(fbt.get_decision_paths(X_train_sample))
-            print(fbt.predict_proba(X_train_sample[0]))
-            print("************")
-            paths = fbt.get_decision_paths(X_train_sample)
-            for i, path in enumerate(paths):
-                print(f" path  {i + 1}:")
-                for step in path:
-                    print(f"  {step}")
-
-        except Exception as e:
-            print(f"Failed to generate visualization: {e}")
-
-        return fbt
+    # def train_and_visualize_fbt(self,X_train,y_train, xgb_model, max_depth=5, min_forest_size=10,
+    #                             max_number_of_conjunctions=100, pruning_method='auc'):
+    #
+    #     try:
+    #         fbt = ModelManager.load_fbt(xgb_model)
+    #         print(" ss fbt")
+    #     except:  # train fbt base on the given model
+    #         # Combine X_train and y_train into a single DataFrame
+    #         train_data = X_train.copy()
+    #         train_data['hospital_death'] = y_train  # Add the label column
+    #
+    #         # Extract feature names
+    #         feature_cols = X_train.columns.tolist()
+    #         label_col = 'hospital_death'  # Name of the label column
+    #
+    #         # Prepare FBT
+    #         fbt = FBT(max_depth=max_depth,
+    #                   min_forest_size=min_forest_size,
+    #                   max_number_of_conjunctions=max_number_of_conjunctions,
+    #                   pruning_method=pruning_method)
+    #
+    #         X_train_sample = train_data.sample(frac=0.1, random_state=42)
+    #
+    #         # Fit the FBT model to the training data
+    #         fbt.fit(X_train_sample, feature_cols, label_col, xgb_model)
+    #
+    #         print("FBT model trained successfully.")
+    #
+    #         ModelManager.save_fbt(xgb_model, fbt)
+    #
+    #     # Visualize the tree (example code for visualization)
+    #     try:
+    #         print("Generating visualization...")
+    #         train_data = X_train.copy()
+    #         train_data['hospital_death'] = y_train  # Add the label column
+    #         X_train_sample = train_data.sample(frac=0.05, random_state=42)
+    #         # print(fbt.get_decision_paths(X_train_sample))
+    #         print(fbt.predict_proba(X_train_sample[0]))
+    #         print("************")
+    #         paths = fbt.get_decision_paths(X_train_sample)
+    #         for i, path in enumerate(paths):
+    #             print(f" path  {i + 1}:")
+    #             for step in path:
+    #                 print(f"  {step}")
+    #
+    #     except Exception as e:
+    #         print(f"Failed to generate visualization: {e}")
+    #
+    #     return fbt
 
     def global_explain_with_shap(self, X_train):
         """

@@ -124,7 +124,7 @@ class LogisticRegressionModel(Model):
         # Show the plot
         plt.show()
 
-    def global_explain(self, X_train, y_train):
+    def global_explain_inherent(self, X_train):
         """
         Explain the logistic regression model using coefficients and save feature importance in JSON.
 
@@ -140,43 +140,45 @@ class LogisticRegressionModel(Model):
         feature_names = X_train.columns
 
         # Create a DataFrame to display the coefficients with feature names
-        coef_df = pd.DataFrame({'Feature': feature_names, 'Coefficient': coefficients})
-        coef_df['Absolute Coefficient'] = coef_df['Coefficient'].abs()
+        coef_df = pd.DataFrame({
+            "Feature": feature_names,
+            "Contribution": coefficients,
+        })
+        coef_df['Contribution'] = coef_df['Contribution'].abs()
 
         # Compute relative importance as percentages
-        coef_df['Importance (%)'] = (coef_df['Absolute Coefficient'] / coef_df['Absolute Coefficient'].sum()) * 100
 
         # Sort by importance for better interpretability
-        coef_df = coef_df.sort_values(by='Importance (%)', ascending=False)
+        coef_df = coef_df.sort_values(by='Contribution', ascending=False)
 
         # Save all feature importances to JSON
-        feature_importance = {
-            row['Feature']: float(row['Importance (%)'])
-            for _, row in coef_df.iterrows()
-        }
+        # feature_importance = {
+        #     row['Feature']: float(row['Importance (%)'])
+        #     for _, row in coef_df.iterrows()
+        # }
+        #
+        # with open("logistic_feature_importance.json", "w") as f:
+        #     json.dump(feature_importance, f, indent=4)
+        #
+        # print("Feature importance saved to 'logistic_feature_importance.json'.")
 
-        with open("logistic_feature_importance.json", "w") as f:
-            json.dump(feature_importance, f, indent=4)
-
-        print("Feature importance saved to 'logistic_feature_importance.json'.")
-
-        # Select only the top 20 features for visualization
-        top_20_coef_df = coef_df.head(20)
-
-        # Plot the coefficients for the top 20 features with adjusted figsize
-        plt.figure(figsize=(8, 9.5))  # Adjust this ratio as needed (e.g., same as SHAP plot)
-
-        # Create horizontal bar plot with reversed order so that the most important feature is at the top
-        plt.barh(top_20_coef_df['Feature'][::-1], top_20_coef_df['Coefficient'][::-1], color='skyblue')
-
-        plt.xlabel('Coefficient Value')
-        plt.title('Top 20 Logistic Regression Coefficients')
-
-        # Rotate feature names for better readability
-        plt.yticks(rotation=0)  # Makes sure the text is horizontal
-        plt.tight_layout()  # Adjusts layout so that labels fit without being cut off
-
-        plt.show()
+        # # Select only the top 20 features for visualization
+        # top_20_coef_df = coef_df.head(20)
+        #
+        # # Plot the coefficients for the top 20 features with adjusted figsize
+        # plt.figure(figsize=(8, 9.5))  # Adjust this ratio as needed (e.g., same as SHAP plot)
+        #
+        # # Create horizontal bar plot with reversed order so that the most important feature is at the top
+        # plt.barh(top_20_coef_df['Feature'][::-1], top_20_coef_df['Coefficient'][::-1], color='skyblue')
+        #
+        # plt.xlabel('Coefficient Value')
+        # plt.title('Top 20 Logistic Regression Coefficients')
+        #
+        # # Rotate feature names for better readability
+        # plt.yticks(rotation=0)  # Makes sure the text is horizontal
+        # plt.tight_layout()  # Adjusts layout so that labels fit without being cut off
+        #
+        # plt.show()
 
         return coef_df
 
