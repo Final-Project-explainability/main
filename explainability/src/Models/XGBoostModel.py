@@ -307,10 +307,10 @@ class XGBoostModel(Model):
         )
 
         # Save to JSON file
-        with open("feature_importance.json", "w") as f:
+        with open("XGBOOST_global_shap.json", "w") as f:
             json.dump(sorted_feature_importance, f, indent=4)
 
-        print("Sorted feature importance saved to 'feature_importance.json'.")
+        print("Sorted feature importance saved to 'XGBOOST_global_shap.json'.")
 
         # Display the SHAP summary plot
         shap.summary_plot(shap_values, X_train)
