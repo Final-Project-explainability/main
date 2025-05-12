@@ -12,7 +12,7 @@ def load_data():
         pd.DataFrame: Loaded dataset as a pandas DataFrame.
     """
     print('Loading dataset...')
-    file_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'training_v2.csv')
+    file_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'diabetic_data.csv')
     try:
         data = pd.read_csv(file_path)
         print(f"Data loaded successfully from {file_path}")

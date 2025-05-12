@@ -223,13 +223,22 @@ class Model(ABC):
         class_names = ['Survive', 'Death']
         feature_names = X_train.columns.tolist()
 
-        binary_features = [
-            'elective_surgery', 'apache_post_operative', 'arf_apache', 'gcs_unable_apache',
-            'intubated_apache', 'ventilated_apache', 'aids', 'cirrhosis', 'diabetes_mellitus',
-            'hepatic_failure', 'immunosuppression', 'leukemia', 'lymphoma', 'solid_tumor_with_metastasis'
-        ]
+        # binary_features = [
+        #     'elective_surgery', 'apache_post_operative', 'arf_apache', 'gcs_unable_apache',
+        #     'intubated_apache', 'ventilated_apache', 'aids', 'cirrhosis', 'diabetes_mellitus',
+        #     'hepatic_failure', 'immunosuppression', 'leukemia', 'lymphoma', 'solid_tumor_with_metastasis'
+        # ]
 
-        categorical_indices = [X_train.columns.get_loc(f) for f in binary_features]
+        categorical_features = ['race', 'gender', 'age', 'payer_code', 'medical_specialty', 'diag_1',
+                           'diag_2', 'diag_3', 'metformin', 'repaglinide', 'nateglinide',
+                           'chlorpropamide', 'glimepiride', 'acetohexamide', 'glipizide',
+                           'glyburide', 'tolbutamide', 'pioglitazone', 'rosiglitazone', 'acarbose',
+                           'miglitol', 'troglitazone', 'tolazamide', 'insulin',
+                           'glyburide-metformin', 'glipizide-metformin',
+                           'glimepiride-pioglitazone', 'metformin-rosiglitazone',
+                           'metformin-pioglitazone', 'change', 'diabetesMed']
+
+        categorical_indices = [X_train.columns.get_loc(f) for f in categorical_features]
         # categorical_names = {
         #     idx: sorted(X_train.iloc[:, idx].dropna().unique().tolist())
         #     for idx in categorical_indices

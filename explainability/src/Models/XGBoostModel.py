@@ -124,7 +124,7 @@ class XGBoostModel(Model):
         return df
 
 
-    def train(self, X_train, y_train, tune_hyperparameter=False):
+    def train(self, X_train, y_train, tune_hyperparameter=True):
         """
             Train an XGBoost model with optional hyperparameter tuning, feature selection, and long-run optimization.
             Args:
@@ -140,7 +140,7 @@ class XGBoostModel(Model):
         # Split training data into training and validation sets
         X_train_split, X_val, y_train_split, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
 
-        params_path = "../data/jsons/best_params.json"
+        params_path = "../data/jsons/best_params_xgboost_new_data.json"
 
         if tune_hyperparameter:
             print("Starting long-run optimization with Optuna...")
@@ -152,9 +152,8 @@ class XGBoostModel(Model):
                     'max_depth': trial.suggest_int('max_depth', 4, 5),  # Focusing on a narrow range for depth
                     'learning_rate': trial.suggest_float('learning_rate', 0.001, 0.01, log=True),
                     # Very low learning rate
-                    'n_estimators': trial.suggest_int('n_estimators', 5000, 20000),  # Allowing for very large trees
+                    'n_estimators': trial.suggest_int('n_estimators', 500, 2000),  # Allowing for very large trees
                     'min_child_weight': trial.suggest_int('min_child_weight', 4, 6),
-                    'gamma': trial.suggest_float('gamma', 1e-8, 0.01, log=True),  # Smaller gamma values for fine-tuning
                     'subsample': trial.suggest_float('subsample', 0.6, 0.8),
                     'colsample_bytree': trial.suggest_float('colsample_bytree', 0.7, 0.9),
                     'scale_pos_weight': scale_pos_weight  # Balancing class imbalance

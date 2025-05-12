@@ -192,14 +192,14 @@ class DecisionTreeModel(Model):
         """
         print("Training a single Decision Tree with hyperparameter tuning...")
 
-        params_path = "../data/jsons/decision_tree_params2.json"
+        params_path = "../data/jsons/decision_tree_params_new_data2.json"
 
         # Check if we have pre-saved parameters
         if os.path.exists(params_path):
             with open(params_path, 'r') as file:
                 best_params = json.load(file)
             print(f"Loaded best parameters from {params_path}: {best_params}")
-            model = DecisionTreeClassifier(**best_params, random_state=42)
+            model = DecisionTreeClassifier(**best_params, class_weight='balanced', random_state=42)
             model.fit(X_train, y_train)
 
         else:
@@ -213,7 +213,7 @@ class DecisionTreeModel(Model):
 
             # RandomizedSearch for better efficiency
             search = RandomizedSearchCV(
-                DecisionTreeClassifier(random_state=42),
+                DecisionTreeClassifier(class_weight='balanced',random_state=42),
                 param_distributions=param_dist,
                 n_iter=20,
                 scoring='roc_auc',
@@ -631,7 +631,7 @@ class DecisionTreeModel(Model):
         """
         feature_names = X_train.columns
 
-        # self.visualize_decision_tree(feature_names=feature_names)
+        self.visualize_decision_tree(feature_names=feature_names)
 
         # Extract feature importances
         importances = self.model.feature_importances_

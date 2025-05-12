@@ -3,20 +3,21 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from data_loader import load_data
 from explainability.src.ModelManager import ModelManager
-from preprocessing import preprocess_data, feature_engineering
+from preprocessing import preprocess_data, feature_engineering, preprocessing
 from sklearn.model_selection import train_test_split
 import json
 import os
 
 # Load the data
-file_path = "example_test_data.csv"
+file_path = "example_test_data_new.csv"
 data = pd.read_csv(file_path)
 print(f"Data loaded successfully from {file_path}")
 
+
 # Separate features (X), target (y), and IDs
-X_sample = data.drop(columns=['hospital_death', 'patient_id'])
-y = data['hospital_death']
-ids = data['patient_id']
+X_sample = data.drop(columns=['readmitted', 'patient_nbr'])
+y = data['readmitted']
+ids = data['patient_nbr']
 
 # data_before_preprocessing = load_data()
 #
@@ -98,20 +99,25 @@ def get_model_data():
     """
     Main function to execute the model management workflow.
     """
-    # Load and preprocess the dataset
     data = load_data()
-    if data is None:
-        print("Error loading the dataset")
-        return
-
     print("Column names in the dataset:", data.columns)
 
-    # Feature engineering and preprocessing
-    data = feature_engineering(data)
-    data = preprocess_data(data)
+    newData = True
 
-    X = data.drop(columns=['hospital_death'])
-    y = data['hospital_death']
+    if (newData):
+        data = preprocessing(data)
+        label = 'readmitted'
+
+    else:
+        # Feature engineering and preprocessing
+        data = feature_engineering(data)
+        data = preprocess_data(data)
+        label = 'hospital_death'
+
+    X = data.drop(columns=[label])
+    y = data[label]
+    # Load and preprocess the dataset
+
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
@@ -122,7 +128,7 @@ X_train, X_test, y_train, y_test = get_model_data()
 models = [logisticRegressionModel, decisionTreeModel, xgboostModel]
 
 # Directory to save JSON files
-output_dir = "patient_contributions"
+output_dir = "patient_contributions_new_data"
 os.makedirs(output_dir, exist_ok=True)
 
 
@@ -206,22 +212,26 @@ def global_explain():
             X_sample_for_prediction = X_train_sample
             X_train_for_prediction = X_train
 
-        # shap_val = model.global_explain_with_shap(X_train_for_prediction)
-        # lime_val = model.global_explain_with_lime(X_train_for_prediction, X_sample_for_prediction)
-        # shap_df = normalize_contributions(shap_val)
+        shap_val = model.global_explain_with_shap(X_train_for_prediction)
+        lime_val = model.global_explain_with_lime(X_train_for_prediction, X_sample_for_prediction)
         inherent_df = model.global_explain_inherent(X_train=X_train_for_prediction)
+
+        shap_df = normalize_contributions(shap_val)
+        lime_df = normalize_contributions(lime_val)
         inherent_df = normalize_contributions(inherent_df)
 
         # Format output
         formatted_output = format_model_output(
             model_name,
-            inherent=inherent_df.to_dict(orient="records"),
+            shap_data=shap_df.to_dict(orient="records"),
+            lime_data=lime_df.to_dict(orient="records"),
+            inherent_data=inherent_df.to_dict(orient="records"),
         )
 
         json_output = {}
         json_output.update(formatted_output)
         # Save the JSON for the patient
-        output_file = os.path.join(f"{model_name}_global_inherent.json")
+        output_file = os.path.join(f"{model_name}_global.json")
         with open(output_file, "w") as f:
             json.dump(json_output, f, indent=4)
 

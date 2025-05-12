@@ -4,94 +4,12 @@ from explainability.src.ModelManager import ModelManager
 from explainability.src.Models.DecisionTreeModel import DecisionTreeModel
 from explainability.src.Models.LogisticRegressionModel import LogisticRegressionModel
 from explainability.src.Models.XGBoostModel import XGBoostModel
-from preprocessing import preprocess_data, balance_data, feature_engineering, normalize_data
+from preprocessing import preprocess_data, balance_data, feature_engineering, normalize_data, preprocessing
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import os
 
-# # General function to train or load a model
-# def train_or_load_model(model_name, train_func, X_train, y_train, load_model=True):
-#     if load_model:
-#         try:
-#             model = ModelManager.load_model(model_name)
-#             print("Model loaded")
-#         except ValueError:
-#             model = train_func(X_train, y_train)
-#             print(f"{model_name.capitalize()} model trained")
-#     else:
-#         model = train_func(X_train, y_train)
-#         print(f"{model_name.capitalize()} model trained")
-#     return model
-#
-# def select_and_train_model(X_train, y_train, model_choice='GradientBoostingClassifier', load_model=True):
-#     """Select, train or load a model based on the given choice."""
-#     model_mapping = {
-#         'tuned': tune_model,
-#         'XGBClassifier': train_xgboost,
-#         'LogisticRegression': train_logistic_regression,
-#         'LGBMClassifier': train_lightgbm,
-#         'GradientBoostingClassifier': train_gradient_boosting,
-#         'DecisionTreeClassifier': train_decision_tree
-#     }
-#
-#     train_func = model_mapping.get(model_choice)
-#     return train_or_load_model(model_choice, train_func, X_train, y_train, load_model)
-#
-#
-# # Main function
-# def main(model_choice='GradientBoostingClassifier', balance_method=None, load_model=True):
-#     data = load_data()
-#
-#     if data is None:
-#         print("Error loading the dataset")
-#         return
-#
-#     print("Column names in the dataset:", data.columns)
-#
-#     need_to_normalize_data = model_choice == 'LogisticRegression' or 'DecisionTreeClassifier'
-#     data = feature_engineering(data)
-#     data = preprocess_data(data) #TODO: check what it is doing in the code.
-#
-#     if 'hospital_death' in data.columns:
-#         X = data.drop(columns=['hospital_death'])
-#         y = data['hospital_death']
-#     else:
-#         print("Target column 'hospital_death' not found.")
-#         return
-#
-#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-#
-#     # # Perform data balancing if balance_method is specified
-#     # if balance_method:
-#     #     X_train_balanced, y_train_balanced = balance_data(X_train, y_train, method=balance_method)
-#     #     print(f"Data balanced using method: {balance_method}")
-#     # else:
-#     #     X_train_balanced, y_train_balanced = X_train, y_train  # No balancing
-#     #     print("Data not balanced.")
-#
-#     if need_to_normalize_data:
-#         X_train, X_test = normalize_data(X_train, X_test)
-#
-#     model = select_and_train_model(X_train, y_train, model_choice, load_model)
-#
-#     evaluate_model(model, X_test, y_test)
-#
-#     # Functions for SHAP and LIME explanations remain the same
-#     GlobalExplainer.explain_model(model, X_train, X_test, y_train)
-#
-#     # Call function to analyze mortality risk for a specific individual
-#     LocalExplainer.analyze_individual_risk(model, X_test, y_test)
-#
-#
-# if __name__ == "__main__":
-#     # main(model_choice='lightgbm')  # You can choose the new LightGBM model here
-#     # main('XGBClassifier')
-#     main('DecisionTreeClassifier')
-#     # main(model_choice='logistic', balance_method='smote')
-#     # main(model_choice='logistic', balance_method='undersample')
-#     # main(model_choice='tuned random')
 
-######  new version
 def save_test_data(X_test, y_test, file_name=None, num_records=None):
     """
     Saves X_test and y_test into a separate file in the 'data' directory.
@@ -163,7 +81,7 @@ def manage_models(X_train, y_train, X_test, y_test, model_choice):
         'DecisionTreeClassifier': {
             'class': DecisionTreeModel,
             'normalize': False,  # No normalization required
-            'balance_data': True  # Requires data balancing
+            'balance_data': False  # Requires data balancing
         },
         'XGBClassifier': {
             'class': XGBoostModel,
@@ -197,28 +115,6 @@ def manage_models(X_train, y_train, X_test, y_test, model_choice):
         print("Invalid choice. Defaulting to train a new model.")
         load_model = False
 
-    # Balance data if required
-    if model_info['balance_data']:
-        print("")
-        print(f"Balancing dataset for {model_choice}...")
-        print("Select a balancing method:")
-        print("1. SMOTE")
-        print("2. Undersample")
-        print("3. None (Skip balancing)")
-        balance_choice = input("Enter your choice: ")
-
-        balance_methods = {
-            "1": "smote",
-            "2": "undersample",
-            "3": None
-        }
-        balance_method = balance_methods.get(balance_choice)
-        if balance_method is None:
-            print("Skipping dataset balancing.")
-            print("")
-        else:
-            X_train, y_train = balance_data(X_train, y_train, method=balance_method)
-
     # Normalize data if required
     if model_info['normalize']:
         print(f"Normalizing data for {model_choice}...")
@@ -235,10 +131,9 @@ def manage_models(X_train, y_train, X_test, y_test, model_choice):
         ModelManager.save_model(model)
 
     print("\nPerforming global explanations...")
-    model.global_explain_inherent(X_train=X_train, y_train=y_train)
-    # print("\nPerforming local explanations using LIME...")
-
-    LocalExplainer.analyze_individual_risk(model, X_test, y_test, X_train)
+    model.global_explain_inherent(X_train=X_train)
+    #
+    # LocalExplainer.analyze_individual_risk(model, X_test, y_test, X_train)
 
 
 def main():
@@ -253,30 +148,34 @@ def main():
 
     print("Column names in the dataset:", data.columns)
 
-    # Feature engineering and preprocessing
-    data = feature_engineering(data)
-    data = preprocess_data(data)
+    newData = True
 
-    X = data.drop(columns=['hospital_death'])
-    y = data['hospital_death']
+    if(newData):
+        data = preprocessing(data)
+        label = 'readmitted'
+
+    else:
+        # Feature engineering and preprocessing
+        data = feature_engineering(data)
+        data = preprocess_data(data)
+        label = 'hospital_death'
+
+    X = data.drop(columns=[label])
+    y = data[label]
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    # save_test_data(X_test, y_test, 'example_test_data.csv', num_records=200)
+    # save_test_data(X_test, y_test, 'example_test_data_new.csv', num_records=200)
     # Menu for model selection
     print("\nSelect a model to train and evaluate:")
-    print("1. GradientBoostingClassifier")
-    print("2. DecisionTreeClassifier")
-    print("3. XGBClassifier")
-    print("4. LGBMClassifier")
-    print("5. LogisticRegression")
+    print("1. DecisionTreeClassifier")
+    print("2. XGBClassifier")
+    print("3. LogisticRegression")
 
     choice = input("Enter the number of your choice: ")
     model_choices = {
-        "1": "GradientBoostingClassifier",
-        "2": "DecisionTreeClassifier",
-        "3": "XGBClassifier",
-        "4": "LGBMClassifier",
-        "5": "LogisticRegression"
+        "1": "DecisionTreeClassifier",
+        "2": "XGBClassifier",
+        "3": "LogisticRegression"
     }
 
     model_choice = model_choices.get(choice)
